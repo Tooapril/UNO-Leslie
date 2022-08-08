@@ -8,12 +8,12 @@ from rlcard.games.uno import Round
 
 class UnoGame:
 
-    def __init__(self, allow_step_back=False, num_players=2):
+    def __init__(self, allow_step_back=False, num_players=4):
         self.allow_step_back = allow_step_back
         self.np_random = np.random.RandomState()
         self.num_players = num_players
         self.payoffs = [0 for _ in range(self.num_players)]
-
+        
     def configure(self, game_config):
         ''' Specifiy some game specific parameters, such as number of players
         '''
@@ -111,6 +111,7 @@ class UnoGame:
         Returns:
             (list): Each entry corresponds to the payoff of one player
         '''
+        # 使用简单的赢者置为 1 作为 payoffs
         winner = self.round.winner
         if winner is not None and len(winner) == 1:
             self.payoffs[winner[0]] = 1
@@ -118,6 +119,15 @@ class UnoGame:
                 if index != winner[0]:
                     self.payoffs[index] = -1
         return self.payoffs
+    
+    def get_scores(self):
+        ''' Return the scores of the game
+
+        Returns:
+            (list): Each entry corresponds to the score of one player
+        '''
+        
+        return self.round.get_payoffs(self.players)
 
     def get_legal_actions(self):
         ''' Return the legal actions for current player

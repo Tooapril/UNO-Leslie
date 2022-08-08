@@ -30,7 +30,7 @@ class Env(object):
         # Game specific configurations
         # Currently only support blackjack、limit-holdem、no-limit-holdem
         # TODO support game configurations for all the games
-        supported_envs = ['blackjack', 'doudizhu', 'uno']
+        supported_envs = ['blackjack', 'leduc-holdem', 'limit-holdem', 'no-limit-holdem']
         if self.name in supported_envs: # 将 config 的配置替换 default_game_config
             _game_config = self.default_game_config.copy()
             for key in config:
@@ -164,8 +164,11 @@ class Env(object):
             trajectories[player_id].append(state) # 并将最新 state 存入对应玩家 trajectories
 
         # Payoffs
-        payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负）
-
+        if not is_training: # 非训练模式，获取胜负情况
+            payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负）
+        else: # 训练模式，获取奖励值
+            payoffs = self.get_scores()
+            
         return trajectories, payoffs
 
     def is_over(self):
@@ -201,6 +204,16 @@ class Env(object):
 
         Returns:
             (list): A list of payoffs for each player.
+
+        Note: Must be implemented in the child class.
+        '''
+        raise NotImplementedError
+    
+    def get_scores(self):
+        ''' Get the scores of players. Must be implemented in the child class.
+
+        Returns:
+            (list): A list of scores for each player.
 
         Note: Must be implemented in the child class.
         '''

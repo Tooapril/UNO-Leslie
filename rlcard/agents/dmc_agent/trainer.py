@@ -29,6 +29,7 @@ from .model import DMCModel
 from .utils import get_batch, create_buffers, create_optimizers, act, log
 
 def compute_loss(logits, targets):
+    '''MSE compute loss'''
     loss = ((logits - targets)**2).mean()
     return loss
 
@@ -43,9 +44,11 @@ def learn(position,
           lock):
     """Performs a learning (optimization) step."""
     device = torch.device('cuda:'+str(training_device))
+    # 将 batch_size * unroll_length 个数据组装好
     state = torch.flatten(batch['state'].to(device), 0, 1).float()
     action = torch.flatten(batch['action'].to(device), 0, 1).float()
     target = torch.flatten(batch['target'].to(device), 0, 1)
+    # 计算本 batch 中 payoffs 的平均值
     episode_returns = batch['episode_return'][batch['done']]
     mean_episode_return_buf[position].append(torch.mean(episode_returns).to(device))
 
@@ -71,13 +74,13 @@ class DMCTrainer:
     def __init__(self,
                  env,
                  load_model=False,
-                 xpid='dmc',
                  save_interval=30,
                  num_actor_devices=1,
                  num_actors = 5,
                  training_device=0,
                  savedir='experiments/dmc_result',
-                 total_frames=100000000000,
+                 total_frames=10000000000,
+                 num_eval_games=10000,
                  exp_epsilon=0.01,
                  batch_size=32,
                  unroll_length=100,
@@ -94,7 +97,6 @@ class DMCTrainer:
         Args:
             env: RLCard environment
             load_model (boolean): Whether loading an existing model
-            xpid (string): Experiment id (default: dmc)
             save_interval (int): Time interval (in minutes) at which to save the model
             num_actor_devices (int): The number devices used for simulation
             num_actors (int): Number of actors for each simulation device
@@ -115,9 +117,8 @@ class DMCTrainer:
         self.env = env # 已创建好的 Env
 
         self.plogger = FileWriter(
-            xpid=xpid,
             rootdir=savedir,
-        ) # 将 xpid 传入，并将其存入 savedir 下
+        ) # 将 logger 存入 savedir 下
 
         self.checkpointpath = os.path.expandvars(
             os.path.expanduser('%s/%s' % (savedir, 'model.tar')))
@@ -125,7 +126,6 @@ class DMCTrainer:
         self.T = unroll_length
         self.B = batch_size
 
-        self.xpid = xpid # Experiment id
         self.load_model = load_model # 是否加载已有模型
         self.savedir = savedir # 存储实验数据的根目录
         self.save_interval = save_interval # 间隔多少 minute 存储一下模型
@@ -133,6 +133,7 @@ class DMCTrainer:
         self.num_actors = num_actors # 每个模拟器上的 actor 数
         self.training_device = training_device # GPU 上训练模型的索引号
         self.total_frames = total_frames # 全部环境训练帧数
+        self.num_eval_games = num_eval_games # 每次断点评估游戏 reward 的局数
         self.exp_epsilon = exp_epsilon # 𝛆 探索的概率
         self.num_buffers = num_buffers # 学习者的批大小
         self.num_threads = num_threads # 学习者的线程数

@@ -41,7 +41,7 @@ if __name__ == '__main__':
                         help='Time interval (in minutes) at which to save the model')
     parser.add_argument('--num_actor_devices', default=1, type=int,
                         help='The number of devices used for simulation')
-    parser.add_argument('--num_actors', default=1, type=int,
+    parser.add_argument('--num_actors', default=3, type=int,
                         help='The number of actors for each simulation device')
     parser.add_argument('--training_device', default=0, type=int,
                         help='The index of the GPU used for training models')

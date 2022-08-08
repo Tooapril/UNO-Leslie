@@ -60,14 +60,8 @@ def gather_metadata() -> Dict:
 
 class FileWriter:
     def __init__(self,
-                 xpid: str = None,
                  xp_args: dict = None,
                  rootdir: str = '~/palaas'):
-        if not xpid:
-            # make unique id
-            xpid = '{proc}_{unixtime}'.format(
-                proc=os.getpid(), unixtime=int(time.time()))
-        self.xpid = xpid
         self._tick = 0
 
         # metadata gathering
@@ -78,7 +72,6 @@ class FileWriter:
         # (and rewrite the args) we might have non-serializable objects (or
         # other nasty stuff).
         self.metadata['args'] = copy.deepcopy(xp_args)
-        self.metadata['xpid'] = self.xpid
 
         formatter = logging.Formatter('%(message)s')
         self._logger = logging.getLogger('palaas/out')
@@ -149,7 +142,7 @@ class FileWriter:
             raise NotImplementedError
         else:
             to_log['_tick'] = self._tick
-            self._tick += 1
+            self._tick += 1 # 记录一条数据累计加一
         to_log['_time'] = time.time()
 
         old_len = len(self.fieldnames)

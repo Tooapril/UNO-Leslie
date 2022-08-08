@@ -35,6 +35,10 @@ class UnoEnv(Env):
     def get_payoffs(self):
 
         return np.array(self.game.get_payoffs())
+    
+    def get_scores(self):
+        
+        return np.array(self.game.get_scores())
 
     def _decode_action(self, action_id):
         legal_ids = self._get_legal_actions()

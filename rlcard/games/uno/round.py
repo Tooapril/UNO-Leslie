@@ -1,6 +1,8 @@
 from rlcard.games.uno.card import UnoCard
+from rlcard.games.uno.judger import UnoJudger
 from rlcard.games.uno.utils import cards2list, WILD, WILD_DRAW_4
 
+import numpy as np
 
 class UnoRound:
 
@@ -14,12 +16,13 @@ class UnoRound:
         self.np_random = np_random
         self.dealer = dealer
         self.target = None
-        self.current_player = 0
+        self.current_player = np.random.randint(0, num_players)
         self.num_players = num_players
         self.direction = 1
         self.played_cards = []
         self.is_over = False
         self.winner = None
+        self.payoffs = [0 for _ in range(self.num_players)]
 
     def flip_top_card(self):
         ''' Flip the top card of the card pile
@@ -155,6 +158,34 @@ class UnoRound:
             state['num_cards'].append(len(player.hand))
         return state
 
+    def get_payoffs(self, players):
+        '''Get player's payoffs'''
+        # 计分策略：取二、三、四名游戏结束时的手牌分总和正数与第一名的手牌分相加
+        winner_payoffs = 0
+        for index, player in enumerate(players):
+            player_score = self.count_hand_score(player.hand)
+            self.payoffs[index] = player_score
+            winner_payoffs += -(player_score)
+            
+        if self.winner is None:
+            self.winner = UnoJudger.judge_winner(self.payoffs)
+        
+        for i in self.winner:
+            self.payoffs[i] += winner_payoffs
+        return self.payoffs
+
+    def count_hand_score(self, cards):
+        '''Count player hand card score'''
+        count = 0
+        for card in cards:
+            if card.type == 'number':
+                count += int(card.trait)
+            elif card.type == 'action':
+                count += 20
+            elif card.type == 'wild':
+                count += 50
+        return -count
+
     def replace_deck(self):
         ''' Add cards have been played to deck
         '''
@@ -163,7 +194,7 @@ class UnoRound:
         self.played_cards = []
 
     def is_draw_available(self, card):
-        
+        '''Judge the card whether is available'''
         # draw a card with the same color or the same trait of target —— 抽牌（数字牌或功能牌）
         if card.color == self.target.color or card.trait == self.target.trait:
             return True
@@ -177,11 +208,10 @@ class UnoRound:
         # replace deck if there is no card in draw pile
         if not self.dealer.deck: # 当牌盒内的牌不够时
             # 游戏循环：从已出牌型中重新洗牌抽牌
-            self.replace_deck()
+            # self.replace_deck()
             # 游戏结束：统计所有玩家当前牌值
-            #self.is_over = True
-            #self.winner = UnoJudger.judge_winner(players)
-            #return None
+            self.is_over = True
+            return None
 
         card = self.dealer.deck.pop()
         players[self.current_player].hand.append(card)
@@ -206,11 +236,10 @@ class UnoRound:
         elif card.trait == 'draw_2':
             if len(self.dealer.deck) < 2: # 当牌盒内的牌不够时
                 # 游戏循环：从已出牌型中重新洗牌抽牌
-                self.replace_deck()
+                # self.replace_deck()
                 # 游戏结束：统计所有玩家当前牌值
-                #self.is_over = True
-                #self.winner = UnoJudger.judge_winner(players)
-                #return None
+                self.is_over = True
+                return None
             self.dealer.deal_cards(players[(current + direction) % num_players], 2)
             current = (current + direction) % num_players
 
@@ -218,11 +247,10 @@ class UnoRound:
         elif card.trait == 'wild_draw_4': # 当牌盒内的牌不够时
             if len(self.dealer.deck) < 4:
                 # 游戏循环：从已出牌型中重新洗牌抽牌
-                self.replace_deck()
+                # self.replace_deck()
                 # 游戏结束：统计所有玩家当前牌值
-                #self.is_over = True
-                #self.winner = UnoJudger.judge_winner(players)
-                #return None
+                self.is_over = True
+                return None
             self.dealer.deal_cards(players[(current + direction) % num_players], 4)
             current = (current + direction) % num_players
         self.current_player = (current + self.direction) % num_players

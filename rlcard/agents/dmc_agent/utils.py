@@ -24,7 +24,7 @@ shandle.setFormatter(
     logging.Formatter(
         '[%(levelname)s:%(process)d %(module)s:%(lineno)d %(asctime)s] '
         '%(message)s'))
-log = logging.getLogger('doudzero')
+log = logging.getLogger('uno')
 log.propagate = False
 log.addHandler(shandle)
 log.setLevel(logging.INFO)
@@ -35,7 +35,7 @@ def get_batch(free_queue,
               batch_size,
               lock):
     with lock:
-        indices = [full_queue.get() for _ in range(batch_size)]
+        indices = [full_queue.get() for _ in range(batch_size)] # 在 batch_size 大小的 buffers 中取 batch_size 大小的 batch 数据进行学习，达到抽样的效果
     batch = {
         key: torch.stack([buffers[key][m] for m in indices], dim=1)
         for key in buffers

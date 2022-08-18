@@ -106,7 +106,7 @@ class UnoRound:
         wild_4_actions = []
         hand = players[player_id].hand
         target = self.target
-        if target.type == 'wild':
+        if target.type == 'wild':  # type: ignore
             for card in hand: # 记录当前玩家可出牌型
                 if card.type == 'wild':
                     if card.trait == 'wild_draw_4': # 当前手牌内有 ‘+4’
@@ -117,7 +117,7 @@ class UnoRound:
                         if wild_flag == 0:
                             wild_flag = 1
                             legal_actions.extend(WILD)
-                elif card.color == target.color: # 当前手牌有 可出的数字牌
+                elif card.color == target.color:  # type: ignore # 当前手牌有 可出的数字牌
                     legal_actions.append(card.str)
 
         # target is aciton card or number card
@@ -132,7 +132,7 @@ class UnoRound:
                         if wild_flag == 0:
                             wild_flag = 1
                             legal_actions.extend(WILD)
-                elif card.color == target.color or card.trait == target.trait: # 当前手牌有 可出的数字牌或功能牌
+                elif card.color == target.color or card.trait == target.trait:  # type: ignore # 当前手牌有 可出的数字牌或功能牌
                     legal_actions.append(card.str)
         if not legal_actions: # 只有 ‘+4’ 牌的情况下，legal_actions 为 ‘+4’
             legal_actions = wild_4_actions
@@ -150,7 +150,7 @@ class UnoRound:
         state = {}
         player = players[player_id]
         state['hand'] = cards2list(player.hand)
-        state['target'] = self.target.str
+        state['target'] = self.target.str  # type: ignore
         state['played_cards'] = cards2list(self.played_cards)
         state['legal_actions'] = self.get_legal_actions(players, player_id) # 获取当前玩家可出牌型
         state['num_cards'] = []
@@ -196,7 +196,7 @@ class UnoRound:
     def is_draw_available(self, card):
         '''Judge the card whether is available'''
         # draw a card with the same color or the same trait of target —— 抽牌（数字牌或功能牌）
-        if card.color == self.target.color or card.trait == self.target.trait:
+        if card.color == self.target.color or card.trait == self.target.trait:  # type: ignore
             return True
         # draw a wild card —— 抽牌（万能牌）
         elif card.type == 'wild':

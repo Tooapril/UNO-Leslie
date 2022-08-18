@@ -24,23 +24,23 @@ class Env(object):
                 'rlcard/envs/blackjack.py'
                 TODO: Support more game configurations in the future.
         '''
-        self.allow_step_back = self.game.allow_step_back = config['allow_step_back']
+        self.allow_step_back = self.game.allow_step_back = config['allow_step_back']  # type: ignore
         self.action_recorder = []
 
         # Game specific configurations
         # Currently only support blackjack、limit-holdem、no-limit-holdem
         # TODO support game configurations for all the games
         supported_envs = ['blackjack', 'leduc-holdem', 'limit-holdem', 'no-limit-holdem']
-        if self.name in supported_envs: # 将 config 的配置替换 default_game_config
-            _game_config = self.default_game_config.copy()
+        if self.name in supported_envs: # type: ignore # 将 config 的配置替换 default_game_config
+            _game_config = self.default_game_config.copy()  # type: ignore
             for key in config:
                 if key in _game_config:
                     _game_config[key] = config[key]
-            self.game.configure(_game_config) # 初始化游戏玩家数
+            self.game.configure(_game_config) # type: ignore # 初始化游戏玩家数
 
         # Get the number of players/actions in this game
-        self.num_players = self.game.get_num_players() # 玩家数
-        self.num_actions = self.game.get_num_actions() # 动作数
+        self.num_players = self.game.get_num_players() # type: ignore # 玩家数
+        self.num_actions = self.game.get_num_actions() # type: ignore # 动作数
 
         # A counter for the timesteps
         self.timestep = 0
@@ -58,7 +58,7 @@ class Env(object):
                 (numpy.array): The begining state of the game
                 (int): The begining player
         '''
-        state, player_id = self.game.init_game()
+        state, player_id = self.game.init_game()  # type: ignore
         self.action_recorder = []
         return self._extract_state(state), player_id # 返回编码后的玩家 state 和 玩家 id
 
@@ -81,7 +81,7 @@ class Env(object):
         self.timestep += 1
         # Record the action for human interface
         self.action_recorder.append((self.get_player_id(), action)) # 记录对应玩家采取的动作
-        next_state, player_id = self.game.step(action) # 采取 action 后更新环境 state 和 player_id
+        next_state, player_id = self.game.step(action) # type: ignore # 采取 action 后更新环境 state 和 player_id
 
         return self._extract_state(next_state), player_id
 
@@ -99,7 +99,7 @@ class Env(object):
         if not self.allow_step_back:
             raise Exception('Step back is off. To use step_back, please set allow_step_back=True in rlcard.make')
 
-        if not self.game.step_back():
+        if not self.game.step_back():  # type: ignore
             return False
 
         player_id = self.get_player_id()
@@ -155,7 +155,7 @@ class Env(object):
             player_id = next_player_id
 
             # Save state.
-            if not self.game.is_over(): # 游戏环境暂未结束，将最新的 state 存入对应玩家 trajectories
+            if not self.game.is_over(): # type: ignore # 游戏环境暂未结束，将最新的 state 存入对应玩家 trajectories
                 trajectories[player_id].append(state)
 
         # Add a final state to all the players
@@ -177,7 +177,7 @@ class Env(object):
         Returns:
             (boolean): True if current game is over
         '''
-        return self.game.is_over()
+        return self.game.is_over()  # type: ignore
 
     def get_player_id(self):
         ''' Get the current player id
@@ -185,7 +185,7 @@ class Env(object):
         Returns:
             (int): The id of the current player
         '''
-        return self.game.get_player_id()
+        return self.game.get_player_id()  # type: ignore
 
 
     def get_state(self, player_id):
@@ -197,7 +197,7 @@ class Env(object):
         Returns:
             (numpy.array): The observed state of the player
         '''
-        return self._extract_state(self.game.get_state(player_id))
+        return self._extract_state(self.game.get_state(player_id))  # type: ignore
 
     def get_payoffs(self):
         ''' Get the payoffs of players. Must be implemented in the child class.
@@ -240,7 +240,7 @@ class Env(object):
 
     def seed(self, seed=None): # 初始化 seed 个随机种子
         self.np_random, seed = seeding.np_random(seed)
-        self.game.np_random = self.np_random
+        self.game.np_random = self.np_random  # type: ignore
         return seed
 
     def _extract_state(self, state):

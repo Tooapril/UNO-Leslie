@@ -7,7 +7,7 @@ import rlcard
 from rlcard.agents import DQNAgent, RandomAgent
 from rlcard.utils import get_device, set_seed, tournament
 
-def load_model(model_path, env=None, position=None, device=None):
+def load_model(model_path, env, position=None, device=None):
     if os.path.isfile(model_path):  # Torch model
         import torch
         agent = torch.load(model_path, map_location=device)

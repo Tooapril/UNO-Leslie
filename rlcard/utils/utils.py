@@ -11,7 +11,7 @@ def set_seed(seed):
         installed_packages = [r.decode().split('==')[0] for r in reqs.split()]
         if 'torch' in installed_packages:
             import torch
-            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.deterministic = True  # type: ignore
             torch.manual_seed(seed)
         np.random.seed(seed)
         import random
@@ -124,7 +124,7 @@ def print_card(cards):
             lines[8].append('└─────────┘')
         else:
             if isinstance(card, Card):
-                elegent_card = elegent_form(card.suit + card.rank)
+                elegent_card = elegent_form(card.suit + card.rank)  # type: ignore
             else:
                 elegent_card = elegent_form(card)
             suit = elegent_card[0]
@@ -218,7 +218,7 @@ def tournament(env, num):
                 payoffs[i] += _payoffs[i]
             counter += 1
     for i, _ in enumerate(payoffs):
-        payoffs[i] /= counter
+        payoffs[i] /= counter  # type: ignore
     return payoffs
 
 def plot_curve(csv_path, save_path, algorithm):

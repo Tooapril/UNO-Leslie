@@ -20,7 +20,7 @@ def colorize(string, color, bold=False, highlight = False):
     blue, magenta, cyan, white, crimson
     """
     attr = []
-    num = color2num[color]
+    num = color2num[color]  # type: ignore
     if highlight: num += 10
     attr.append(str(num))
     if bold: attr.append('1')

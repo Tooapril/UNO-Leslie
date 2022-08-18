@@ -8,7 +8,7 @@ import rlcard
 from rlcard.games.uno.card import UnoCard as Card
 
 # Read required docs
-ROOT_PATH = rlcard.__path__[0]
+ROOT_PATH = rlcard.__path__[0]  # type: ignore
 
 # a map of abstract action to its index and a list of abstract action
 with open(os.path.join(ROOT_PATH, 'games/uno/jsondata/action_space.json'), 'r') as file:

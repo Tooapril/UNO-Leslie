@@ -46,7 +46,7 @@ class UnoEnv(Env):
             return ACTION_LIST[action_id]
         # if (len(self.game.dealer.deck) + len(self.game.round.played_cards)) > 17:
         #    return ACTION_LIST[60]
-        return ACTION_LIST[np.random.choice(legal_ids)]
+        return ACTION_LIST[np.random.choice(legal_ids)]  # type: ignore
 
     def _get_legal_actions(self):
         legal_actions = self.game.get_legal_actions()
@@ -64,7 +64,7 @@ class UnoEnv(Env):
         state['hand_cards'] = [cards2list(player.hand)
                                for player in self.game.players]
         state['played_cards'] = cards2list(self.game.round.played_cards)
-        state['target'] = self.game.round.target.str
+        state['target'] = self.game.round.target.str  # type: ignore
         state['current_player'] = self.game.round.current_player
         state['legal_actions'] = self.game.round.get_legal_actions(
             self.game.players, state['current_player'])

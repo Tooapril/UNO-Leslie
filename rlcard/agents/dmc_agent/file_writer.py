@@ -30,7 +30,7 @@ def gather_metadata() -> Dict:
     # gathering git metadata
     try:
         repo = git.Repo(search_parent_directories=True)
-        git_sha = repo.commit().hexsha
+        git_sha = repo.commit().hexsha  # type: ignore
         git_data = dict(
             commit=git_sha,
             branch=repo.active_branch.name,
@@ -60,7 +60,7 @@ def gather_metadata() -> Dict:
 
 class FileWriter:
     def __init__(self,
-                 xp_args: dict = None,
+                 xp_args: dict = None,  # type: ignore
                  rootdir: str = '~/palaas'):
         self._tick = 0
 
@@ -136,7 +136,7 @@ class FileWriter:
         else: # 如果文件不存在，则存储表头
             self.fieldnames = ['_tick', '_time']
 
-    def log(self, to_log: Dict, tick: int = None,
+    def log(self, to_log: Dict, tick: int = None,  # type: ignore
             verbose: bool = False) -> None:
         if tick is not None:
             raise NotImplementedError

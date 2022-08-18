@@ -31,8 +31,8 @@ class Card:
             return NotImplemented
 
     def __hash__(self):
-        suit_index = Card.valid_suit.index(self.suit)
-        rank_index = Card.valid_rank.index(self.rank)
+        suit_index = Card.valid_suit.index(self.suit)  # type: ignore
+        rank_index = Card.valid_rank.index(self.rank)  # type: ignore
         return rank_index + 100 * suit_index
 
     def __str__(self):
@@ -41,7 +41,7 @@ class Card:
         Returns:
             string: the combination of rank and suit of a card. Eg: AS, 5H, JD, 3C, ...
         '''
-        return self.rank + self.suit
+        return self.rank + self.suit  # type: ignore
 
     def get_index(self):
         ''' Get index of a card.
@@ -49,4 +49,4 @@ class Card:
         Returns:
             string: the combination of suit and rank of a card. Eg: 1S, 2H, AD, BJ, RJ...
         '''
-        return self.suit+self.rank
+        return self.suit+self.rank  # type: ignore

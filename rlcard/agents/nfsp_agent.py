@@ -93,7 +93,7 @@ class NFSPAgent(object):
         self.use_raw = False
         self._num_actions = num_actions
         self._state_shape = state_shape
-        self._layer_sizes = hidden_layers_sizes + [num_actions]
+        self._layer_sizes = hidden_layers_sizes + [num_actions]  # type: ignore
         self._batch_size = batch_size
         self._train_every = train_every
         self._sl_learning_rate = sl_learning_rate
@@ -179,7 +179,7 @@ class NFSPAgent(object):
             probs = remove_illegal(probs, legal_actions)
             action = np.random.choice(len(probs), p=probs)
 
-        return action
+        return action  # type: ignore
 
     def eval_step(self, state):
         ''' Use the average policy for evaluation purpose
@@ -312,13 +312,13 @@ class AveragePolicyNetwork(nn.Module):
         self.mlp_layers = mlp_layers
 
         # set up mlp w/ relu activations
-        layer_dims = [np.prod(self.state_shape)] + self.mlp_layers
+        layer_dims = [np.prod(self.state_shape)] + self.mlp_layers  # type: ignore
         mlp = [nn.Flatten()]
-        mlp.append(nn.BatchNorm1d(layer_dims[0]))
+        mlp.append(nn.BatchNorm1d(layer_dims[0]))  # type: ignore
         for i in range(len(layer_dims)-1):
-            mlp.append(nn.Linear(layer_dims[i], layer_dims[i+1]))
+            mlp.append(nn.Linear(layer_dims[i], layer_dims[i+1]))  # type: ignore
             if i != len(layer_dims) - 2: # all but final have relu
-                mlp.append(nn.ReLU())
+                mlp.append(nn.ReLU())  # type: ignore
         self.mlp = nn.Sequential(*mlp)
 
     def forward(self, s):

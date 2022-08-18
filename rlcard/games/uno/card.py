@@ -58,13 +58,13 @@ class UnoCard:
 
             if trait == 'Draw' or (trait[:4] == 'Wild' and not wild_color):
                 print(trait, end='')
-            elif color == 'r':
+            elif color == 'r':  # type: ignore
                 print(colored(trait, 'red'), end='')
-            elif color == 'g':
+            elif color == 'g':  # type: ignore
                 print(colored(trait, 'green'), end='')
-            elif color == 'b':
+            elif color == 'b':  # type: ignore
                 print(colored(trait, 'blue'), end='')
-            elif color == 'y':
+            elif color == 'y':  # type: ignore
                 print(colored(trait, 'yellow'), end='')
 
             if i < len(cards) - 1:

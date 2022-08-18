@@ -364,13 +364,13 @@ class EstimatorNetwork(nn.Module):
         self.mlp_layers = mlp_layers
 
         # build the Q network
-        layer_dims = [np.prod(self.state_shape)] + self.mlp_layers
+        layer_dims = [np.prod(self.state_shape)] + self.mlp_layers  # type: ignore
         fc = [nn.Flatten()]
-        fc.append(nn.BatchNorm1d(layer_dims[0]))
+        fc.append(nn.BatchNorm1d(layer_dims[0]))  # type: ignore
         for i in range(len(layer_dims)-1):
-            fc.append(nn.Linear(layer_dims[i], layer_dims[i+1], bias=True))
-            fc.append(nn.Tanh())
-        fc.append(nn.Linear(layer_dims[-1], self.num_actions, bias=True))
+            fc.append(nn.Linear(layer_dims[i], layer_dims[i+1], bias=True))  # type: ignore
+            fc.append(nn.Tanh())  # type: ignore
+        fc.append(nn.Linear(layer_dims[-1], self.num_actions, bias=True))  # type: ignore
         self.fc_layers = nn.Sequential(*fc)
 
     def forward(self, s):
@@ -431,9 +431,9 @@ def copy_model_parameters(sess, estimator1, estimator2):
         estimator1 (Estimator): Estimator to copy the paramters from
         estimator2 (Estimator): Estimator to copy the parameters to
     '''
-    e1_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator1.scope)]
+    e1_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator1.scope)]  # type: ignore
     e1_params = sorted(e1_params, key=lambda v: v.name)
-    e2_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator2.scope)]
+    e2_params = [t for t in tf.trainable_variables() if t.name.startswith(estimator2.scope)]  # type: ignore
     e2_params = sorted(e2_params, key=lambda v: v.name)
 
     update_ops = []

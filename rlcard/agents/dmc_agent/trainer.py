@@ -62,7 +62,7 @@ def learn(position,
 
         optimizer.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm_(agent.parameters(), max_grad_norm)
+        nn.utils.clip_grad_norm_(agent.parameters(), max_grad_norm)  # type: ignore
         optimizer.step()
 
         for actor_model in actor_models:

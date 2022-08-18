@@ -18,7 +18,7 @@ class EnvSpec(object):
             entry_point (string): A string the indicates the location of the envronment class
         '''
         self.env_id = env_id
-        mod_name, class_name = entry_point.split(':')
+        mod_name, class_name = entry_point.split(':')  # type: ignore
         self._entry_point = getattr(importlib.import_module(mod_name), class_name) # 在 mod_name 路径下获取 class_name 对象
 
     def make(self, config=DEFAULT_CONFIG):

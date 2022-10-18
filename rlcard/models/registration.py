@@ -1,5 +1,6 @@
 import importlib
 
+
 class ModelSpec(object):
     ''' A specification for a particular Model.
     '''

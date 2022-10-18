@@ -26,11 +26,12 @@ SOFTWARE.
 '''
 
 import random
+from collections import namedtuple
+from copy import deepcopy
+
 import numpy as np
 import torch
 import torch.nn as nn
-from collections import namedtuple
-from copy import deepcopy
 
 from rlcard.utils.utils import remove_illegal
 

@@ -1,10 +1,11 @@
-import numpy as np
 import collections
-
 import os
 import pickle
 
+import numpy as np
+
 from rlcard.utils.utils import *
+
 
 class CFRAgent():
     ''' Implement CFR (chance sampling) algorithm

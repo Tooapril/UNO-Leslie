@@ -1,5 +1,6 @@
-import os
 import csv
+import os
+
 
 class Logger(object):
     ''' Logger saves the running results and helps make plots from the results

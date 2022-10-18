@@ -1,9 +1,8 @@
 from copy import deepcopy
+
 import numpy as np
 
-from rlcard.games.uno import Dealer
-from rlcard.games.uno import Player
-from rlcard.games.uno import Round
+from rlcard.games.uno import Dealer, Player, Round
 
 
 class UnoGame:
@@ -151,9 +150,9 @@ class UnoGame:
         ''' Return the number of applicable actions
 
         Returns:
-            (int): The number of actions. There are 61 actions
+            (int): The number of actions. There are 63 actions
         '''
-        return 61
+        return 63
 
     def get_player_id(self):
         ''' Return the current player's id

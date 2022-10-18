@@ -2,6 +2,7 @@ import numpy as np
 
 from rlcard.games.base import Card
 
+
 def set_seed(seed):
     if seed is not None:
         import subprocess
@@ -224,8 +225,9 @@ def tournament(env, num):
 def plot_curve(csv_path, save_path, algorithm):
     ''' Read data from csv file and plot the results
     '''
-    import os
     import csv
+    import os
+
     import matplotlib.pyplot as plt
     with open(csv_path) as csvfile:
         reader = csv.DictReader(csvfile)

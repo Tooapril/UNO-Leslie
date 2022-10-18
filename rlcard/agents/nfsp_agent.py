@@ -19,9 +19,10 @@
 See the paper https://arxiv.org/abs/1603.01121 for more details.
 '''
 
-import random
 import collections
 import enum
+import random
+
 import numpy as np
 import torch
 import torch.nn as nn

@@ -1,5 +1,6 @@
 from rlcard.utils import *
 
+
 class Env(object):
     '''
     The base Env class. For all the environments in RLCard,

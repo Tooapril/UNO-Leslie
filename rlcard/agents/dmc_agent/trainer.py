@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import os
+import pprint
 import threading
 import time
 import timeit
-import pprint
 from collections import deque
 
 import torch
@@ -26,7 +26,8 @@ from torch import nn
 
 from .file_writer import FileWriter
 from .model import DMCModel
-from .utils import get_batch, create_buffers, create_optimizers, act, log
+from .utils import act, create_buffers, create_optimizers, get_batch, log
+
 
 def compute_loss(logits, targets):
     '''MSE compute loss'''

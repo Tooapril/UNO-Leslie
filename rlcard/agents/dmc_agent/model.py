@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import numpy as np
-
 import torch
 from torch import nn
+
 
 class DMCNet(nn.Module):
     def __init__(self,

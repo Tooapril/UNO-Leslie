@@ -1,11 +1,12 @@
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
 
 from rlcard.envs import Env
 from rlcard.games.uno import Game
-from rlcard.games.uno.utils import encode_hand, encode_target
-from rlcard.games.uno.utils import ACTION_SPACE, ACTION_LIST
-from rlcard.games.uno.utils import cards2list
+from rlcard.games.uno.utils import (ACTION_LIST, ACTION_SPACE, cards2list,
+                                    encode_action_sequence, encode_hand,
+                                    encode_target, get_one_hot_array)
 
 DEFAULT_GAME_CONFIG = {
         'game_num_players': 4,
@@ -18,13 +19,32 @@ class UnoEnv(Env):
         self.default_game_config = DEFAULT_GAME_CONFIG
         self.game = Game()
         super().__init__(config)
-        self.state_shape = [[4, 4, 15] for _ in range(self.num_players)]
+        self.state_shape = [[1066] for _ in range(self.num_players)]
         self.action_shape = [None for _ in range(self.num_players)]
 
     def _extract_state(self, state):
-        obs = np.zeros((4, 4, 15), dtype=int)
-        encode_hand(obs[:3], state['hand']) # obs[0] - obs[2] 记录玩家当前手牌
-        encode_target(obs[3], state['target']) # obs[3] 记录当前牌面牌值
+        current_hand = encode_hand(state['hand']) # obs[0] - obs[2] 记录玩家当前手牌
+        teammate_hand = encode_hand(state['teammate_hand']) # obs[3] - obs[5] 记录队友当前手牌
+        target_card = encode_target(state['target']) # obs[6] 记录当前牌面牌值
+        other_cards = encode_hand(state['other_cards']) # obs[7] - obs[9] 记录剩余牌型
+        
+        last_10_actions = encode_action_sequence(self._process_action_seq()) # obs[10] - obs[19] 记录最近 10 步 actions
+        
+        my_num_cards_left = get_one_hot_array(state['num_cards'][self.get_player_id()], 79) # obs[20] 记录自己剩余手牌数
+        teammate_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 2) % self.num_players], 79) # obs[21] 记录队友剩余手牌数
+        oppo1_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 1) % self.num_players], 79) # obs[22] 记录左边对手剩余手牌数
+        oppo2_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 3) % self.num_players], 79) # obs[23] 记录右边对手剩余手牌数
+        
+        obs = np.concatenate((current_hand,
+                              teammate_hand,
+                              target_card,
+                              other_cards,
+                              last_10_actions,
+                              my_num_cards_left,
+                              teammate_num_cards_left,
+                              oppo1_num_cards_left,
+                              oppo2_num_cards_left))
+
         legal_action_id = self._get_legal_actions() # 记录当前玩家对应当前牌面所有 legal_actions 的 id
         extracted_state = {'obs': obs, 'legal_actions': legal_action_id} # 记录编码后的 obs 和 legal_action_id 值
         extracted_state['raw_obs'] = state # 记录原始 state 值
@@ -44,8 +64,7 @@ class UnoEnv(Env):
         legal_ids = self._get_legal_actions()
         if action_id in legal_ids:
             return ACTION_LIST[action_id]
-        # if (len(self.game.dealer.deck) + len(self.game.round.played_cards)) > 17:
-        #    return ACTION_LIST[60]
+        
         return ACTION_LIST[np.random.choice(legal_ids)]  # type: ignore
 
     def _get_legal_actions(self):
@@ -53,6 +72,14 @@ class UnoEnv(Env):
         legal_ids = {ACTION_SPACE[action]: None for action in legal_actions} # 获取当前 legal_actions 的所有 id
         return OrderedDict(legal_ids)
 
+    def _process_action_seq(self, length=10):
+        sequence = [action[1] for action in self.action_recorder[-length:]]
+        if len(sequence) < length:
+            empty_sequence = ['' for _ in range(length - len(sequence))]
+            empty_sequence.extend(sequence)
+            sequence = empty_sequence
+        return sequence
+        
     def get_perfect_information(self):
         ''' Get the perfect information of the current state
 

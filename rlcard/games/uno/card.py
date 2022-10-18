@@ -1,5 +1,6 @@
 from termcolor import colored
 
+
 class UnoCard:
 
     info = {'type':  ['number', 'action', 'wild'],

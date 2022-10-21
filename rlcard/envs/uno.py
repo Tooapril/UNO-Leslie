@@ -19,7 +19,7 @@ class UnoEnv(Env):
         self.default_game_config = DEFAULT_GAME_CONFIG
         self.game = Game()
         super().__init__(config)
-        self.state_shape = [[1066] for _ in range(self.num_players)]
+        self.state_shape = [[1096] for _ in range(self.num_players)]
         self.action_shape = [None for _ in range(self.num_players)]
 
     def _extract_state(self, state):
@@ -28,18 +28,18 @@ class UnoEnv(Env):
         target_card = encode_target(state['target']) # obs[6] 记录当前牌面牌值
         other_cards = encode_hand(state['other_cards']) # obs[7] - obs[9] 记录剩余牌型
         
-        last_10_actions = encode_action_sequence(self._process_action_seq()) # obs[10] - obs[19] 记录最近 10 步 actions
+        last_12_actions = encode_action_sequence(self._process_action_seq()) # obs[10] - obs[21] 记录最近 10 步 actions
         
-        my_num_cards_left = get_one_hot_array(state['num_cards'][self.get_player_id()], 79) # obs[20] 记录自己剩余手牌数
-        teammate_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 2) % self.num_players], 79) # obs[21] 记录队友剩余手牌数
-        oppo1_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 1) % self.num_players], 79) # obs[22] 记录左边对手剩余手牌数
-        oppo2_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 3) % self.num_players], 79) # obs[23] 记录右边对手剩余手牌数
+        my_num_cards_left = get_one_hot_array(state['num_cards'][self.get_player_id()], 79) # obs[22] 记录自己剩余手牌数
+        teammate_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 2) % self.num_players], 79) # obs[23] 记录队友剩余手牌数
+        oppo1_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 1) % self.num_players], 79) # obs[24] 记录左边对手剩余手牌数
+        oppo2_num_cards_left = get_one_hot_array(state['num_cards'][(self.get_player_id() + 3) % self.num_players], 79) # obs[25] 记录右边对手剩余手牌数
         
         obs = np.concatenate((current_hand,
                               teammate_hand,
                               target_card,
                               other_cards,
-                              last_10_actions,
+                              last_12_actions,
                               my_num_cards_left,
                               teammate_num_cards_left,
                               oppo1_num_cards_left,
@@ -72,7 +72,7 @@ class UnoEnv(Env):
         legal_ids = {ACTION_SPACE[action]: None for action in legal_actions} # 获取当前 legal_actions 的所有 id
         return OrderedDict(legal_ids)
 
-    def _process_action_seq(self, length=10):
+    def _process_action_seq(self, length=12):
         sequence = [action[1] for action in self.action_recorder[-length:]]
         if len(sequence) < length:
             empty_sequence = ['' for _ in range(length - len(sequence))]

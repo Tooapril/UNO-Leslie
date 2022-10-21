@@ -136,9 +136,9 @@ def encode_action(action):
     
     if action == 'draw':
         other_actions[0] = 1
-    elif action == 'pass':
-        other_actions[1] = 1
     elif action == 'query':
+        other_actions[1] = 1
+    elif action == 'pass':
         other_actions[2] = 1
     else:
         target_info = action.split('-')

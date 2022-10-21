@@ -1,4 +1,5 @@
 import numpy as np
+from pyparsing import ParseSyntaxException
 
 from rlcard.games.uno.card import UnoCard
 from rlcard.games.uno.judger import UnoJudger
@@ -176,19 +177,39 @@ class UnoRound:
         return state
 
     def get_payoffs(self, players):
+        for index, player in enumerate(players): # 计算当前手牌分（负值）
+            self.payoffs[index] = self.count_hand_score(player.hand)
+        
+        if self.winner is None: # 如果四人都没有打完手牌，则确定手牌分最高的一队为赢家
+            self.winner = UnoJudger.judge_winner(self.payoffs)
+            
+        for index, _ in enumerate(players):
+            if not self.winner: # 平局时，奖励值均为 0
+                self.payoffs[index] = 0
+            elif index in self.winner:
+                self.payoffs[index] = 1
+            else:
+                self.payoffs[index] = -1 
+        
+        return self.payoffs
+
+    def get_scores(self, players):
         '''Get player's payoffs'''
         # 计分策略：取输掉的一队手牌总分为赢家获得的奖励值
         winner_payoffs = 0
         
-        for index, player in enumerate(players): # 计算当前手牌分
+        for index, player in enumerate(players): # 计算当前手牌分（负值）
             self.payoffs[index] = self.count_hand_score(player.hand)
 
         if self.winner is None: # 如果四人都没有打完手牌，则确定手牌分最高的一队为赢家
             self.winner = UnoJudger.judge_winner(self.payoffs)
         
-        for index, player in enumerate(players): # 计算输家手牌分作为奖励值
-            if index not in self.winner:
-                winner_payoffs += self.payoffs[index]
+        if not self.winner: # 平局，取任意一队的手牌分作为奖励值
+                winner_payoffs = self.payoffs[0] + self.payoffs[2]
+        else: # 非平局，取输的一队手牌分作为奖励值
+            for index, player in enumerate(players): # 计算输家手牌分作为奖励值
+                if index not in self.winner:
+                    winner_payoffs += self.payoffs[index]
         
         for index, player in enumerate(players): # 给各玩家赋予奖励值
             if index not in self.winner:

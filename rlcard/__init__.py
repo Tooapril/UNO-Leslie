@@ -1,4 +1,4 @@
-name = "rlcard"
-__version__ = "3.0.0"
+name = "uno_with_rlcard"
+__version__ = "3.1.0"
 
 from rlcard.envs import make

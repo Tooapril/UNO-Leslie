@@ -41,9 +41,18 @@ class UnoCard:
         '''
         if isinstance(cards, str):
             cards = [cards]
+        
+        other_action = False
         for i, card in enumerate(cards):
             if card == 'draw':
                 trait = 'Draw'
+                other_action = True
+            elif card == 'query':
+                trait = 'Query'
+                other_action = True
+            elif card == 'pass':
+                trait = 'Pass'
+                other_action = True
             else:
                 color, trait = card.split('-')
                 if trait == 'skip':
@@ -57,7 +66,7 @@ class UnoCard:
                 elif trait == 'wild_draw_4':
                     trait = 'Wild-Draw-4'
 
-            if trait == 'Draw' or (trait[:4] == 'Wild' and not wild_color):
+            if other_action or (trait[:4] == 'Wild' and not wild_color): # 过滤非数字、动作和万能牌
                 print(trait, end='')
             elif color == 'r':  # type: ignore
                 print(colored(trait, 'red'), end='')

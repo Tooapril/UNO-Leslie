@@ -28,14 +28,14 @@ class UNORuleAgentV1(object):
 
         legal_actions = state['raw_legal_actions']
         state = state['raw_obs']
-        if 'draw' in legal_actions:
-            return 'draw'
+        # if 'draw' in legal_actions:
+        #     return 'draw'
 
         hand = state['hand']
 
         # If we have wild-4 simply play it and choose color that appears most in hand
         for action in legal_actions:
-            if action.split('-')[1] == 'wild_draw_4':
+            if action[2:13] == 'wild_draw_4':
                 color_nums = self.count_colors(self.filter_wild(hand))
                 action = max(color_nums, key=color_nums.get) + '-wild_draw_4'  # type: ignore
                 return action

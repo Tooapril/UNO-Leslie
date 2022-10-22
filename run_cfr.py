@@ -11,8 +11,8 @@ from rlcard.utils import Logger, get_device, plot_curve, set_seed, tournament
 def train(args):
     
     # Make environments, CFR only supports Leduc Holdem
-    env = rlcard.make('leduc-holdem', config={'seed': 0, 'allow_step_back':True})
-    eval_env = rlcard.make('leduc-holdem', config={'seed': 0})
+    env = rlcard.make('uno', config={'seed': 0, 'allow_step_back':True})
+    eval_env = rlcard.make('uno', config={'seed': 0})
 
     # Seed numpy, torch, random
     set_seed(args.seed)

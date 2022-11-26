@@ -29,7 +29,7 @@ def gather_metadata() -> Dict:
     date_start = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
     # gathering git metadata
     try:
-        repo = git.Repo(search_parent_directories=True)
+        repo = git.Repo(search_parent_directories=True)  # type: ignore
         git_sha = repo.commit().hexsha  # type: ignore
         git_data = dict(
             commit=git_sha,

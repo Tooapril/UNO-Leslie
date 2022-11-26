@@ -26,7 +26,10 @@ class HumanAgent(object):
         '''
         # print(state['raw_obs'])
         _print_state(state['raw_obs'], state['action_record'])
-        action = int(input('>> You choose action (integer): '))
+        try:
+            action = int(input('>> You choose action (integer): '))
+        except ValueError:
+            action = -1
         while action < 0 or action >= len(state['legal_actions']):
             print('Action illegel...')
             action = int(input('>> Re-choose action (integer): '))
@@ -55,7 +58,7 @@ def _print_state(state, action_record):
             break
         _action_list.insert(0, action_record[-i])
         if i == len(action_record):
-            print('\n>> The first card is ', end='') # 输出第一张牌
+            print('>> The first card is ', end='') # 输出第一张牌
             _print_action(state['played_cards'][0])
             print('')
     for pair in _action_list:

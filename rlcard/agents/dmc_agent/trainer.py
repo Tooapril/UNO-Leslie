@@ -46,15 +46,16 @@ def learn(position,
     """Performs a learning (optimization) step."""
     device = torch.device('cuda:'+str(training_device))
     # 将 batch_size * unroll_length 个数据组装好
-    state = torch.flatten(batch['state'].to(device), 0, 1).float()
-    action = torch.flatten(batch['action'].to(device), 0, 1).float()
+    obs_x = torch.flatten(batch['obs_x'].to(device), 0, 1).float()
+    obs_z = torch.flatten(batch['obs_z'].to(device), 0, 1).float()
+    obs_action = torch.flatten(batch['obs_action'].to(device), 0, 1).float()
     target = torch.flatten(batch['target'].to(device), 0, 1)
     # 计算本 batch 中 payoffs 的平均值
     episode_returns = batch['episode_return'][batch['done']]
     mean_episode_return_buf[position].append(torch.mean(episode_returns).to(device))
 
     with lock:
-        values = agent.forward(state, action)
+        values = agent.forward(obs_x, obs_z, obs_action)
         loss = compute_loss(values, target)
         stats = {
             'mean_episode_return_'+str(position): torch.mean(torch.stack([_r for _r in mean_episode_return_buf[position]])).item(),

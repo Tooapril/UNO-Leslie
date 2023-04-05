@@ -128,11 +128,11 @@ def encode_target(target):
     return plane.flatten()
 
 def encode_action(action):
-    plane = np.zeros((4, 3), dtype=int)
-    other_actions = np.zeros(3, dtype=int) # 记录 draw 和 query 动作
-    
     if action == '':
-        return np.zeros(15, dtype=int)
+        return np.zeros(63, dtype=int)
+    
+    plane = np.zeros((4, 15), dtype=int)
+    other_actions = np.zeros(3, dtype=int) # 记录 draw query pass 动作
     
     if action == 'draw':
         other_actions[0] = 1
@@ -144,23 +144,21 @@ def encode_action(action):
         target_info = action.split('-')
         color = COLOR_MAP[target_info[0]]
         trait = TRAIT_MAP[target_info[1]]
-        if trait < 10: # 数字牌
-            plane[color][0] = 1
-        elif trait < 13: # 功能牌
-            plane[color][1] = 1
-        else: # 万能牌
-            plane[color][2] = 1
+        plane[color][trait] = 1
     
     return np.concatenate((plane.flatten(), other_actions))
 
-def encode_action_sequence(action_list, size=15):
+def encode_action_sequence(action_list, size=63):
     plane = np.zeros((len(action_list), size), dtype=int)
     for row, card in enumerate(action_list):
         plane[row, :] = encode_action(card)
-    return plane.flatten()
+    plane = plane.reshape(3, 252)
+    return plane
 
-def get_one_hot_array(num_left_cards, max_num_cards):
+def get_one_hot_array(num_left_cards, max_num_cards=10):
     one_hot = np.zeros(max_num_cards, dtype=int)
-    one_hot[num_left_cards - 1] = 1
-    
+    if num_left_cards > max_num_cards:
+        one_hot[max_num_cards - 1] = 1
+    else:
+        one_hot[num_left_cards - 1] = 1
     return one_hot 

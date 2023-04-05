@@ -168,7 +168,7 @@ class UnoRound:
         state['hand'] = cards2list(player.hand)
         state['teammate_hand'] = cards2list(teammate.hand) # 队友的手牌
         state['target'] = self.target.str  # type: ignore
-        state['other_cards'] = cards2list(self.dealer.deck) + cards2list(opponent_left.hand) + cards2list(opponent_right.hand) # 牌盒里的牌盒对手的牌
+        state['other_cards'] = cards2list(self.dealer.deck) + cards2list(opponent_left.hand) + cards2list(opponent_right.hand) # 牌盒里的 + 对手的牌
         state['played_cards'] = cards2list(self.played_cards)
         state['legal_actions'] = self.get_legal_actions(players, player_id) # 获取当前玩家可出牌型
         state['num_cards'] = []

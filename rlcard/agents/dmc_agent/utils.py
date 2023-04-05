@@ -53,8 +53,9 @@ def create_buffers(T, num_buffers, state_shape, action_shape):
                 done=dict(size=(T,), dtype=torch.bool),
                 episode_return=dict(size=(T,), dtype=torch.float32),
                 target=dict(size=(T,), dtype=torch.float32),
-                state=dict(size=(T,)+tuple(state_shape[player_id]), dtype=torch.int8),
-                action=dict(size=(T,)+tuple(action_shape[player_id]), dtype=torch.int8),
+                obs_action=dict(size=(T,)+tuple(action_shape[player_id]), dtype=torch.int8),
+                obs_x=dict(size=(T,)+tuple(state_shape[player_id]), dtype=torch.int8),
+                obs_z=dict(size=(T, 3, 252), dtype=torch.int8),
             )
             _buffers: Buffers = {key: [] for key in specs}  # type: ignore
             for _ in range(num_buffers):
@@ -88,8 +89,9 @@ def act(i, device, T, free_queue, full_queue, model, buffers, env):
         done_buf = [[] for _ in range(env.num_players)]
         episode_return_buf = [[] for _ in range(env.num_players)]
         target_buf = [[] for _ in range(env.num_players)]
-        state_buf = [[] for _ in range(env.num_players)]
-        action_buf = [[] for _ in range(env.num_players)]
+        obs_x_buf = [[] for _ in range(env.num_players)]
+        obs_z_buf = [[] for _ in range(env.num_players)]
+        obs_action_buf = [[] for _ in range(env.num_players)]
         size = [0 for _ in range(env.num_players)]
 
         while True:
@@ -105,10 +107,12 @@ def act(i, device, T, free_queue, full_queue, model, buffers, env):
                     target_buf[p].extend([float(payoffs[p]) for _ in range(diff)])
                     # State and action
                     for i in range(0, len(trajectories[p])-2, 2):
-                        state = trajectories[p][i]['obs'] # 获取本局游戏 玩家 p 的所有 state（4*4*15）
-                        action = env.get_action_feature(trajectories[p][i+1]) # 获取本局游戏 玩家 p 的所有 action（61 —— one-hot编码）
-                        state_buf[p].append(torch.from_numpy(state))
-                        action_buf[p].append(torch.from_numpy(action))
+                        obs_x = trajectories[p][i]['x_batch'] # 获取本局游戏 玩家 p 的 state_x 部分
+                        obs_z = trajectories[p][i]['z_batch'] # 获取本局游戏 玩家 p 的 state_z 部分
+                        obs_action = env.get_action_feature(trajectories[p][i+1]) # 获取本局游戏 玩家 p 的所有 action（61 —— one-hot编码）
+                        obs_x_buf[p].append(torch.from_numpy(obs_x))
+                        obs_z_buf[p].append(torch.from_numpy(obs_z))
+                        obs_action_buf[p].append(torch.from_numpy(obs_action))
                 
                 if size[p] > T: # 每个玩家 p 达到 T 次数据量时，将数据存入 queue 便于后续更新
                     index = free_queue[p].get()
@@ -118,14 +122,16 @@ def act(i, device, T, free_queue, full_queue, model, buffers, env):
                         buffers[p]['done'][index][t, ...] = done_buf[p][t]
                         buffers[p]['episode_return'][index][t, ...] = episode_return_buf[p][t]
                         buffers[p]['target'][index][t, ...] = target_buf[p][t]
-                        buffers[p]['state'][index][t, ...] = state_buf[p][t]
-                        buffers[p]['action'][index][t, ...] = action_buf[p][t]
+                        buffers[p]['obs_x'][index][t, ...] = obs_x_buf[p][t]
+                        buffers[p]['obs_z'][index][t, ...] = obs_z_buf[p][t]
+                        buffers[p]['obs_action'][index][t, ...] = obs_action_buf[p][t]
                     full_queue[p].put(index)
                     done_buf[p] = done_buf[p][T:]
                     episode_return_buf[p] = episode_return_buf[p][T:]
                     target_buf[p] = target_buf[p][T:]
-                    state_buf[p] = state_buf[p][T:]
-                    action_buf[p] = action_buf[p][T:]
+                    obs_x_buf[p] = obs_x_buf[p][T:]
+                    obs_z_buf[p] = obs_z_buf[p][T:]
+                    obs_action_buf[p] = obs_action_buf[p][T:]
                     size[p] -= T
 
     except KeyboardInterrupt:

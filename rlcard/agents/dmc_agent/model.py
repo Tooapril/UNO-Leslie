@@ -24,7 +24,8 @@ class DMCNet(nn.Module):
                  action_shape,
                  mlp_layers=[512,512,512,512,512]):
         super().__init__()
-        input_dim = np.prod(state_shape) + np.prod(action_shape) # 将不同 Agent 状态空间与动作空间大小相加
+        self.lstm = nn.LSTM(252, 128, batch_first=True)
+        input_dim = np.prod(state_shape) + 128 + np.prod(action_shape) # 将不同 Agent 状态空间与动作空间大小相加
         layer_dims = [input_dim] + mlp_layers
         fc = []
         for i in range(len(layer_dims)-1):
@@ -33,7 +34,10 @@ class DMCNet(nn.Module):
         fc.append(nn.Linear(layer_dims[-1], 1)) # 网络层最后输出为 1
         self.fc_layers = nn.Sequential(*fc)
 
-    def forward(self, obs, actions):
+    def forward(self, x, z, actions):
+        lstm_out, (h_n, _) = self.lstm(z)
+        lstm_out = lstm_out[:, -1, :]
+        obs = torch.cat([x, lstm_out], dim=-1)
         obs = torch.flatten(obs, 1)
         actions = torch.flatten(actions, 1)
         x = torch.cat((obs, actions), dim=1)
@@ -86,7 +90,9 @@ class DMCAgent:
 
     def predict(self, state):
         # Prepare obs and actions
-        obs = state['obs'].astype(np.float32)
+        # obs = state['obs'].astype(np.float32)
+        x_batch = state['x_batch'].astype(np.float32)
+        z_batch = state['z_batch'].astype(np.float32)
         legal_actions = state['legal_actions']
         action_keys = np.array(list(legal_actions.keys()))
         action_values = list(legal_actions.values())
@@ -94,19 +100,21 @@ class DMCAgent:
         for i in range(len(action_values)):
             if action_values[i] is None:
                 action_values[i] = np.zeros(self.action_shape[0])
-                action_values[i][action_keys[i]] = 1
+                action_values[i][action_keys[i]-1] = 1
         action_values = np.array(action_values, dtype=np.float32) # 统一 action_values 的数据格式
 
-        obs = np.repeat(obs[np.newaxis, :], len(action_keys), axis=0) # 统一 obs 的数据格式
-
+        x_batch = np.repeat(x_batch[np.newaxis, :], len(action_keys), axis=0) # 统一 x_batch 的数据格式
+        z_batch = np.repeat(z_batch[np.newaxis, :, :], len(action_keys), axis=0)# 统一 z_batch 的数据格式
+        
         # Predict Q values
-        values = self.net.forward(torch.from_numpy(obs).to(self.device),
+        values = self.net.forward(torch.from_numpy(x_batch).to(self.device),
+                                  torch.from_numpy(z_batch).to(self.device),
                                   torch.from_numpy(action_values).to(self.device))
 
         return action_keys, values.cpu().detach().numpy()
 
-    def forward(self, obs, actions):
-        return self.net.forward(obs, actions)
+    def forward(self, x, z, actions):
+        return self.net.forward(x, z, actions)
 
     def load_state_dict(self, state_dict):
         return self.net.load_state_dict(state_dict)

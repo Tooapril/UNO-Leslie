@@ -22,11 +22,11 @@ env = rlcard.make('uno')
 
 # Load models
 human_agent = HumanAgent(env.num_actions)
-dmc_agent1 = torch.load('experiments/uno/dmc/v3.1.0/1_5502844800.pth', map_location=device)
+dmc_agent1 = torch.load('experiments/uno/dmc/v3.5.0/1_4003884800.pth', map_location=device)
 dmc_agent1.set_device(device)
-dmc_agent2 = torch.load('experiments/uno/dmc/v3.1.0/2_5502844800.pth', map_location=device)
+dmc_agent2 = torch.load('experiments/uno/dmc/v3.5.0/2_4003884800.pth', map_location=device)
 dmc_agent2.set_device(device)
-dmc_agent3 = torch.load('experiments/uno/dmc/v3.1.0/3_5502844800.pth', map_location=device)
+dmc_agent3 = torch.load('experiments/uno/dmc/v3.5.0/3_4003884800.pth', map_location=device)
 dmc_agent3.set_device(device)
 # uno_rule_agent = models.load('uno-rule-v1').agents[0]
 env.set_agents([human_agent, dmc_agent1, dmc_agent2, dmc_agent3])

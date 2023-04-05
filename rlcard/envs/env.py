@@ -236,7 +236,7 @@ class Env(object):
         '''
         # By default we use one-hot encoding
         feature = np.zeros(self.num_actions, dtype=np.int8)
-        feature[action] = 1
+        feature[action - 1] = 1
         return feature
 
     def seed(self, seed=None): # 初始化 seed 个随机种子

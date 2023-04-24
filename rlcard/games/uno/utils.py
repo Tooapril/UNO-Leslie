@@ -108,7 +108,13 @@ def encode_hand(hand):
         else: #❗️tips 除万能牌外，同一个颜色的牌型最多有且仅有 2 张
             plane[0][color][trait] = 0
             plane[count][color][trait] = 1 
-    return plane.flatten()
+    
+    plane2 = np.zeros((4, 12), dtype=int)
+    for i in range(4):
+        plane2[i] = plane[2][i][1:13]
+    # result = np.concatenate((plane[:2][:][:].flatten(), plane2.flatten()))
+    return np.concatenate((plane[:2][:][:].flatten(), plane2.flatten()))
+
 
 def encode_target(target):
     ''' Encode target and represerve it into plane

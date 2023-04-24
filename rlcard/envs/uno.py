@@ -19,7 +19,7 @@ class UnoEnv(Env):
         self.default_game_config = DEFAULT_GAME_CONFIG
         self.game = Game()
         super().__init__(config)
-        self.state_shape = [[640] for _ in range(self.num_players)]
+        self.state_shape = [[604] for _ in range(self.num_players)]
         self.action_shape = [None for _ in range(self.num_players)]
 
     def _extract_state(self, state):

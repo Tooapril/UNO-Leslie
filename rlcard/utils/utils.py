@@ -2,7 +2,6 @@ import numpy as np
 
 from rlcard.games.base import Card
 
-
 def set_seed(seed):
     if seed is not None:
         import subprocess
@@ -222,12 +221,11 @@ def tournament(env, num):
         payoffs[i] /= counter  # type: ignore
     return payoffs
 
-def plot_curve(csv_path, save_path, algorithm):
+def plot_curve(csv_path, save_path, algorithm, position):
     ''' Read data from csv file and plot the results
     '''
-    import csv
     import os
-
+    import csv
     import matplotlib.pyplot as plt
     with open(csv_path) as csvfile:
         reader = csv.DictReader(csvfile)
@@ -237,8 +235,8 @@ def plot_curve(csv_path, save_path, algorithm):
             xs.append(int(row['timestep']))
             ys.append(float(row['reward']))
         fig, ax = plt.subplots()
-        ax.plot(xs, ys, label=algorithm)
-        ax.set(xlabel='timestep', ylabel='reward')
+        ax.plot(xs, ys, label=algorithm+str(position))
+        ax.set(xlabel='Training steps', ylabel='Winning rate')
         ax.legend()
         ax.grid()
 
@@ -248,3 +246,35 @@ def plot_curve(csv_path, save_path, algorithm):
 
         fig.savefig(save_path)
 
+def plot_double_curve(csv0_path, csv1_path, save_path, algorithm0, algorithm1, position):
+    import os
+    import csv
+    import matplotlib.pyplot as plt
+    with open(csv0_path) as csv0:
+        with open(csv1_path) as csv1:
+            reader0 = csv.DictReader(csv0)
+            reader1 = csv.DictReader(csv1)
+            xs0 = []
+            ys0 = []
+            xs1 = []
+            ys1 = []
+            
+            for row in reader0:
+                xs0.append(int(row['timestep']))
+                ys0.append(float(row['reward']))
+            for row in reader1:
+                xs1.append(int(row['timestep']))
+                ys1.append(float(row['reward']))
+                
+            fig, ax = plt.subplots()
+            ax.plot(xs0, ys0, label=algorithm0+str(position), color='#DC524C')
+            ax.plot(xs1, ys1, label=algorithm1+str(position), color='#739BBA')
+            ax.set(xlabel='Training steps', ylabel='Winning rate')
+            ax.legend()
+            ax.grid()
+            
+            save_dir = os.path.dirname(save_path)
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+
+            fig.savefig(save_path)

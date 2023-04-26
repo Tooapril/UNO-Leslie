@@ -11,14 +11,13 @@ class UnoJudger:
         Returns:
             (list): The player id of the winner
         '''
-        winner = []
-        _payoffs = [] # 计算队伍总手牌值
-        _payoffs.append(payoffs[0] + payoffs[2])
-        _payoffs.append(payoffs[1] + payoffs[3])
+        _payoffs = [None for _ in range(2)] 
+        _payoffs[0] = payoffs[0] + payoffs[2] # 计算队伍一总手牌值
+        _payoffs[1] = payoffs[1] + payoffs[3] # 计算队伍二总手牌值
         
-        for index, payoff in enumerate(payoffs):
-            if len(set(_payoffs)) > 1: # 两队手牌值不同才有 winner
-                if payoff == max(payoffs):
-                    winner.append(index)
-                    winner.append((index + 2) % 4) # 四人合作局，自己和队友同时胜利
-        return winner
+        if _payoffs[0] > _payoffs[1]: # 队伍一胜利
+            return [0, 2]
+        elif _payoffs[0] < _payoffs[1]: # 队伍一胜利
+            return [1, 3]
+        else: # 两队手牌值相同，都是 winner
+            return None

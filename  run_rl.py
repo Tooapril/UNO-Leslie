@@ -1,15 +1,13 @@
 ''' An example of training a reinforcement learning agent on the environments in RLCard
 '''
-import argparse
 import os
+import argparse
 
 import torch
 
 import rlcard
-from rlcard.agents import RandomAgent
-from rlcard.utils import (Logger, get_device, plot_curve, reorganize, set_seed,
-                          tournament)
-
+from rlcard.agents import DQNAgent, RandomAgent
+from rlcard.utils import get_device, set_seed, tournament, reorganize, Logger, plot_curve
 
 def train(args):
 
@@ -23,79 +21,71 @@ def train(args):
     env = rlcard.make(args.env, config={'seed': args.seed})
 
     # Initialize the agent and use random agents as opponents
-    agents = []
-    if args.algorithm == 'dqn':
-        from rlcard.agents import DQNAgent
-        for player_id in range(env.num_players):
-            agent = DQNAgent(num_actions=env.num_actions, 
-                             state_shape=env.state_shape[player_id], 
-                             mlp_layers=[512,512,512,512,512], 
-                             device=device)
-            agents.append(agent)
-    elif args.algorithm == 'nfsp':
-        from rlcard.agents import NFSPAgent
-        for player_id in range(env.num_players):
-            agent = NFSPAgent(num_actions=env.num_actions, 
-                              state_shape=env.state_shape[player_id], 
-                              hidden_layers_sizes=[512,512,512,512,512], 
-                              q_mlp_layers=[512,512,512,512,512], 
-                              device=device)
-            agents.append(agent)
+    teammate = (args.position + 2) % env.num_players
+    opponent_left = (args.position - 1) % env.num_players
+    opponent_right = (args.position + 1) % env.num_players
     
-    env.set_agents(agents) # 将对应 agent 初始化到环境中
+    agents = [[None] for _ in range(env.num_players)]
+    agents[args.position] = DQNAgent(   # type: ignore
+                                num_actions=env.num_actions,
+                                state_shape=env.state_shape[args.position],
+                                mlp_layers=[512,512,512,512,512],
+                                device=device,
+                            )
+    agents[teammate] =  DQNAgent(  # type: ignore
+                            num_actions=env.num_actions,
+                            state_shape=env.state_shape[args.position],
+                            mlp_layers=[512,512,512,512,512],
+                            device=device,
+                        )
+    agents[opponent_left] = RandomAgent(num_actions=env.num_actions)  # type: ignore
+    agents[opponent_right] = RandomAgent(num_actions=env.num_actions)  # type: ignore
+    env.set_agents(agents)
 
     # Start training
-    for player_id in range(env.num_players): # ❓
-        with Logger(args.log_dir) as logger:
-            for episode in range(args.num_episodes):
+    with Logger(args.log_dir) as logger:
+        for episode in range(args.num_episodes):
+            
+            # Generate data from the environment
+            trajectories, payoffs = env.run(is_training=True)
 
-                if args.algorithm == 'nfsp':
-                    agents[player_id].sample_episode_policy()
+            # Reorganaize the data to be state, action, reward, next_state, done
+            trajectories = reorganize(trajectories, payoffs)
 
-                # Generate data from the environment
-                trajectories, payoffs = env.run(is_training=True)
+            # Feed transitions into agent memory, and train the agent
+            # Here, we assume that DQN always plays the first position
+            # and the other players play randomly (if any)
+            for ts in trajectories[args.position]:
+                agent.feed(ts)  # type: ignore
+                
+            # Evaluate the performance. Play with random agents.
+            if episode % args.evaluate_every == 0:
+                logger.log_performance(env.timestep, tournament(env, args.num_eval_games)[args.position])
 
-                # Reorganaize the data to be state, action, reward, next_state, done
-                trajectories = reorganize(trajectories, payoffs)
+        # Get the paths
+        csv_path, fig_path = logger.csv_path, logger.fig_path
 
-                # Feed transitions into agent memory, and train the agent
-                # Here, we assume that DQN always plays the first position
-                # and the other players play randomly (if any)
-                for ts in trajectories[player_id]:
-                    agents[player_id].feed(ts)
-
-                # Evaluate the performance. Play with random agents.
-                if episode % args.evaluate_every == 0:
-                    logger.log_performance(env.timestep, tournament(env, args.num_eval_games)[player_id])
-
-            # Get the paths
-            csv_path, fig_path = logger.csv_path, logger.fig_path
-
-        # Plot the learning curve —— 命名重合问题❓
-        plot_curve(csv_path, fig_path, args.algorithm)
+    # Plot the learning curve
+    plot_curve(csv_path, fig_path, args.algorithm, args.position)  # type: ignore
 
     # Save model
-    for position in range(env.num_players):
-        save_path = os.path.expandvars(os.path.expanduser(
-            '%s/%s' % (args.log_dir, str(position) + '_' + str(env.timestep) + '.pth')))
-        torch.save(agents[position], save_path)
-        print('Model saved in', save_path)
-    # save_path = os.path.join(args.log_dir, 'model.pth')
-    # torch.save(agent, save_path)
-    # print('Model saved in', save_path)
+    save_path = os.path.join(args.log_dir, 'model.pth')
+    torch.save(agent, save_path)  # type: ignore
+    print('Model saved in', save_path)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser("DQN/NFSP example in RLCard")
+    parser = argparse.ArgumentParser("DQN example in RLCard")
     parser.add_argument('--env', type=str, default='uno',
             choices=['blackjack', 'leduc-holdem', 'limit-holdem', 'doudizhu', 'mahjong', 'no-limit-holdem', 'uno', 'gin-rummy'])
-    parser.add_argument('--algorithm', type=str, default='nfsp', choices=['dqn', 'nfsp'])
+    parser.add_argument('--algorithm', type=str, default='dqn')
     parser.add_argument('--cuda', type=str, default='')
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--num_episodes', type=int, default=5000)
-    parser.add_argument('--num_eval_games', type=int, default=2000)
-    parser.add_argument('--evaluate_every', type=int, default=100)
-    parser.add_argument('--log_dir', type=str, default='experiments/blackjack_dqn_result/')
-
+    parser.add_argument('--position', type=int, default=1)
+    parser.add_argument('--num_episodes', type=int, default=100000)
+    parser.add_argument('--num_eval_games', type=int, default=10000)
+    parser.add_argument('--evaluate_every', type=int, default=2000)
+    parser.add_argument('--log_dir', type=str, default='experiments/uno/dqn/')
+    
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda

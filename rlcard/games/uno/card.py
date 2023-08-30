@@ -41,6 +41,8 @@ class UnoCard:
         '''
         if isinstance(cards, str):
             cards = [cards]
+        else:
+            cards = sorted(cards)
         
         other_action = False
         for i, card in enumerate(cards):

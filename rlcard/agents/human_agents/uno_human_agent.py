@@ -33,7 +33,8 @@ class HumanAgent(object):
         while action < 0 or action >= len(state['legal_actions']):
             print('Action illegel...')
             action = int(input('>> Re-choose action (integer): '))
-        return state['raw_legal_actions'][action]
+        raw_legal_actions = sorted(state['raw_legal_actions'])
+        return raw_legal_actions[action]
 
     def eval_step(self, state):
         ''' Predict the action given the curent state for evaluation. The same to step here.
@@ -80,7 +81,8 @@ def _print_state(state, action_record):
         if i != state['current_player']:
             print('Player {} has {} cards.'.format(i, state['num_cards'][i]))
     print('======== Actions You Can Choose =========')
-    for i, action in enumerate(state['legal_actions']):
+    legal_actions = sorted(state['legal_actions'])
+    for i, action in enumerate(legal_actions):
         print(str(i)+': ', end='')
         UnoCard.print_cards(action, wild_color=True)
         if i < len(state['legal_actions']) - 1:

@@ -166,9 +166,12 @@ class Env(object):
 
         # Payoffs
         if not is_training: # 非训练模式，获取胜负情况
-            payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负）
+            payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负） WP
+            # payoffs = self.get_scores() # 计算对应玩家的分数 ADP
         else: # 训练模式，获取奖励值
-            payoffs = self.get_scores()
+            # payoffs = self.get_scores() # 以带权的胜率进行训练 ADP
+            payoffs = self.get_payoffs() # 以胜率为奖励值训练 WP
+            
             
         return trajectories, payoffs
 
@@ -245,6 +248,24 @@ class Env(object):
         return seed
 
     def _extract_state(self, state):
+        # if self.get_player_id() in [0, 2]: # 位置 0 2 存储的是两人局模型
+        #     return self._extract_state_416(state)
+        # elif self.get_player_id() in [1, 3]: # 位置 1 3 存储的是四人局模型
+        #     return self._extract_state_604(state)
+        return self._extract_state_4(state)
+        
+    def _extract_state_416(self, state):
+        ''' Extract useful information from state for RL. Must be implemented in the child class.
+
+        Args:
+            state (dict): The raw state
+
+        Returns:
+            (numpy.array): The extracted state
+        '''
+        raise NotImplementedError
+    
+    def _extract_state_604(self, state):
         ''' Extract useful information from state for RL. Must be implemented in the child class.
 
         Args:

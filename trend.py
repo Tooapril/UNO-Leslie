@@ -33,28 +33,37 @@ def evaluate(args):
     # Make the environment with seed
     env = rlcard.make(args.env, config={'seed': args.seed})
     
+    # Ensure the player position
+    player = args.position
+    teammate = (args.position + 2) % env.num_players
+    opponent_left = (args.position - 1) % env.num_players
+    opponent_right = (args.position + 1) % env.num_players
+    
     # Identify model file
-    x = [f for f in os.listdir(args.log_dir)
-                if os.path.isfile(os.path.join(args.log_dir, f)) and f.startswith(str(args.position) + "_")] # 获取日志文件下所有 “0_” 开头的
-    x.sort(key=lambda x:int(x.split('.')[0])) # 将所有 0 号位的日志文件排序
+    y = [f for f in os.listdir(args.log_dir)
+                if os.path.isfile(os.path.join(args.log_dir, f)) and f.startswith(str(player) + "_")] # 获取日志文件下所有玩家位开头的
+    y = [x.split('_')[1] for x in y] # 仅取断点数保存
+    y.sort(key=lambda x:int(x.split('.')[0])) # 按数字顺序排序
     
     with Logger(args.savedir) as logger:
-        for k, v in enumerate(x): # type: ignore
+        for k, v in enumerate(y): # type: ignore
             # Load models
             agents = [[None] for _ in range(env.num_players)]
-            agents[args.position] = load_model(args.log_dir + v, env, device=device)  # type: ignore
-            agents[1 - args.position] = load_model("random", env, device=device)  # type: ignore
+            agents[player] = load_model(args.log_dir + str(player) + '_' + v, env, device=device)  # type: ignore
+            agents[teammate] = load_model(args.log_dir + str(teammate) + '_' + v, env, device=device)  # type: ignore
+            agents[opponent_left] = load_model("random", env, device=device)  # type: ignore
+            agents[opponent_right] = load_model("random", env, device=device)  # type: ignore
             env.set_agents(agents)
             
             # Evaluate the performance. Play with random agents.
             if k % args.evaluate_every == 0:
-                logger.log_performance(v[v.rfind('_')+1:v.rfind('.')], tournament(env, args.num_games)[args.position]) # 获取玩家 0 的胜率存入日志
+                logger.log_performance(v[v.rfind('_')+1:v.rfind('.')], tournament(env, args.num_games)[player]) # 获取玩家 0 的胜率存入日志
 
         # Get the paths
         csv_path, fig_path = logger.csv_path, logger.fig_path
 
     # Plot the learning curve
-    plot_curve(csv_path, fig_path, args.algorithm, args.position)  # type: ignore
+    plot_curve(csv_path, fig_path, args.algorithm, player)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Evaluation example in RLCard")
@@ -64,12 +73,11 @@ if __name__ == '__main__':
     parser.add_argument('--cuda', type=str, default='')
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--position', type=int, default=0)
-    parser.add_argument('--num_games', type=int, default=100000)
+    parser.add_argument('--num_games', type=int, default=10000)
     parser.add_argument('--evaluate_every', type=int, default=1)
-    parser.add_argument('--log_dir', type=str, default='experiments/uno/dmc/v3.1.0/')
+    parser.add_argument('--log_dir', type=str, default='experiments/uno/dmc/')
     parser.add_argument('--savedir', type=str, default='experiments/uno/dmc/test/')
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda
     evaluate(args)
-

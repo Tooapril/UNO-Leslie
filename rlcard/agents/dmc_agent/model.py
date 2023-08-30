@@ -36,7 +36,7 @@ class DMCNet(nn.Module):
 
     def forward(self, x, z, actions):
         lstm_out, (h_n, _) = self.lstm(z)
-        lstm_out = lstm_out[:, -1, :]
+        lstm_out = lstm_out[:, -1, :] # 仅保留最后一层 LSTM 的结果
         obs = torch.cat([x, lstm_out], dim=-1)
         obs = torch.flatten(obs, 1)
         actions = torch.flatten(actions, 1)

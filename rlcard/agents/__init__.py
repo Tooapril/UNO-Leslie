@@ -9,3 +9,4 @@ if 'torch' in installed_packages:
     from rlcard.agents.dqn_agent import DQNAgent as DQNAgent
 
 from rlcard.agents.random_agent import RandomAgent
+from rlcard.agents.dmc_agent.model import DMCAgent

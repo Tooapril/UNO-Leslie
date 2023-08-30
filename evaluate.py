@@ -4,7 +4,6 @@ import os
 import argparse
 
 import rlcard
-from rlcard.agents import DQNAgent, RandomAgent
 from rlcard.utils import get_device, set_seed, tournament
 
 def load_model(model_path, env=None, position=None, device=None):
@@ -47,8 +46,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("Evaluation example in RLCard")
     parser.add_argument('--env', type=str, default='uno',
             choices=['blackjack', 'leduc-holdem', 'limit-holdem', 'doudizhu', 'mahjong', 'no-limit-holdem', 'uno', 'gin-rummy'])
-    parser.add_argument('--models', nargs='*', default=['experiments/uno/dmc/0_0.pth', 'random', 'experiments/uno/dmc/2_0.pth', 'random'])
-    parser.add_argument('--cuda', type=str, default='1')
+    parser.add_argument('--models', nargs='*', default=['random', 'uno-rule-v1', 'random', 'uno-rule-v1'])
+    parser.add_argument('--cuda', type=str, default='0')
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--num_games', type=int, default=10000)
     args = parser.parse_args()

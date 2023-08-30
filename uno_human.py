@@ -12,21 +12,22 @@ from rlcard.agents.human_agents.uno_human_agent import (HumanAgent,
 from rlcard.utils import get_device
 
 # use cuda 1
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+# os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 # get device
-device = get_device()
+# device = get_device()
+device = torch.device("cpu")
 
 # Make environment
 env = rlcard.make('uno')
 
 # Load models
 human_agent = HumanAgent(env.num_actions)
-dmc_agent1 = torch.load('experiments/uno/dmc/v3.5.0/1_4003884800.pth', map_location=device)
+dmc_agent1 = torch.load('experiments/uno/dmc/v3.7.0/1_1938736000.pth', map_location=device)
 dmc_agent1.set_device(device)
-dmc_agent2 = torch.load('experiments/uno/dmc/v3.5.0/2_4003884800.pth', map_location=device)
+dmc_agent2 = torch.load('experiments/uno/dmc/v3.7.0/2_1938736000.pth', map_location=device)
 dmc_agent2.set_device(device)
-dmc_agent3 = torch.load('experiments/uno/dmc/v3.5.0/3_4003884800.pth', map_location=device)
+dmc_agent3 = torch.load('experiments/uno/dmc/v3.7.0/3_1938736000.pth', map_location=device)
 dmc_agent3.set_device(device)
 # uno_rule_agent = models.load('uno-rule-v1').agents[0]
 env.set_agents([human_agent, dmc_agent1, dmc_agent2, dmc_agent3])

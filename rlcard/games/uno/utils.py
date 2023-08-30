@@ -154,7 +154,14 @@ def encode_action(action):
     
     return np.concatenate((plane.flatten(), other_actions))
 
-def encode_action_sequence(action_list, size=63):
+def encode_action_sequence_8(action_list, size=63):
+    plane = np.zeros((len(action_list), size), dtype=int)
+    for row, card in enumerate(action_list):
+        plane[row, :] = encode_action(card)
+    plane = plane.reshape(4, 126)
+    return plane
+
+def encode_action_sequence_12(action_list, size=63):
     plane = np.zeros((len(action_list), size), dtype=int)
     for row, card in enumerate(action_list):
         plane[row, :] = encode_action(card)

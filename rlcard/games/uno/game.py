@@ -103,6 +103,15 @@ class UnoGame:
         state['num_players'] = self.get_num_players()
         state['current_player'] = self.round.current_player
         return state
+    
+    def get_payoff_train(self):
+        ''' Return the payoffs of the game
+
+        Returns:
+            (list): Each entry corresponds to the payoff of one player
+        '''
+        
+        return self.round.get_payoffs_train(self.players)
 
     def get_payoffs(self):
         ''' Return the payoffs of the game

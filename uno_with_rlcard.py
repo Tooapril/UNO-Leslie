@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("DMC example in RLCard")
     parser.add_argument('--env', type=str, default='uno',
             choices=['blackjack', 'doudizhu', 'uno'])
-    parser.add_argument('--cuda', type=str, default='1')
+    parser.add_argument('--cuda', type=str, default='0')
     parser.add_argument('--load_model', action='store_true',
                     help='Load an existing model')
     parser.add_argument('--savedir', default='experiments/uno/dmc',

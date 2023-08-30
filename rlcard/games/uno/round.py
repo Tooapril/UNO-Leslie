@@ -199,6 +199,25 @@ class UnoRound:
                 else: # 非平局，取输的一队手牌分作为奖励值
                     self.payoffs[index] = winner_payoffs
         return self.payoffs
+    
+    def get_payoffs_train(self, players):
+        '''Get player's payoffs for training'''
+        # 计分策略：取二、三、四名游戏结束时的手牌分总和正数与第一名的手牌分相加
+        for index, player in enumerate(players):
+            self.payoffs[index] = self.count_hand_score(player.hand)
+            
+        if self.winner is None:
+            self.winner = UnoJudger.judge_winner(self.payoffs)
+        
+        for index, _ in enumerate(self.payoffs):
+            if not self.winner: # 平局时，奖励值均为 0
+                self.payoffs[index] = 0
+            elif index in self.winner:
+                self.payoffs[index] = 1
+            else:
+                self.payoffs[index] = -1
+                
+        return self.payoffs
 
     def get_payoffs(self, players):
         '''Get player's payoffs'''
@@ -209,13 +228,17 @@ class UnoRound:
             self.winner = UnoJudger.judge_winner(self.payoffs)
         
         for index, _ in enumerate(players):
-            if not self.winner: # 平局时，奖励值均为 0
-                self.payoffs[index] = 0
-            elif index in self.winner:
+            # if not self.winner: # 平局时，奖励值均为 0
+            #     self.payoffs[index] = 0
+            # elif index in self.winner:
+            #     self.payoffs[index] = 1
+            # else:
+            #     self.payoffs[index] = -1
+            if self.winner is not None and index in self.winner: # 赢家记 1 分
                 self.payoffs[index] = 1
-            else:
-                self.payoffs[index] = -1
-
+            else: # 平局或输家记 0 分
+                self.payoffs[index] = 0
+       
         return self.payoffs
 
     def count_hand_score(self, cards):

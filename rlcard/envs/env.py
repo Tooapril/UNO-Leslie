@@ -45,7 +45,14 @@ class Env(object):
 
         # A counter for the timesteps
         self.timestep = 0
+        
+        # A counter for the team who win the gamea and its number cards > 10 
+        self.count1 = 0
+        self.count2 = 0
 
+        # Set number cards, default is 0
+        self.num_cards = config['num_cards']
+        
         # Set random seed, default is None
         self.seed(config['seed'])
 
@@ -134,12 +141,21 @@ class Env(object):
         Note: The trajectories are 3-dimension list. The first dimension is for different players.
               The second dimension is for different transitions. The third dimension is for the contents of each transiton
         '''
+        team_one = False
+        team_two = False
         trajectories = [[] for _ in range(self.num_players)]
         state, player_id = self.reset() # 重置一局游戏的 玩家 state 和 id
 
         # Loop to play the game
         trajectories[player_id].append(state) # 将对应玩家初始状态存入 trajectories
         while not self.is_over(): # 游戏没结束则继续
+            # 统计游戏中牌数大于 10 的玩家
+            for k, v in enumerate(state['raw_obs']['num_cards']):
+                if k in [0, 2] and v > self.num_cards:
+                    team_one = True
+                elif k in [1, 3] and v > self.num_cards:
+                    team_two = True
+            
             # Agent plays（根据当前状态传入 Q 网络选择合法动作）
             if not is_training: # 非训练模式，评估
                 action, _ = self.agents[player_id].eval_step(state)
@@ -166,12 +182,15 @@ class Env(object):
 
         # Payoffs
         if not is_training: # 非训练模式，获取胜负情况
-            payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负） WP
-            # payoffs = self.get_scores() # 计算对应玩家的分数 ADP
+            payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负） WR
+            # payoffs = self.get_scores() # 计算对应玩家的分数 WS
+            if team_one and payoffs[0] > 0:
+                self.count1 += 1
+            elif team_two and payoffs[1] > 0:
+                self.count2 += 1
         else: # 训练模式，获取奖励值
-            # payoffs = self.get_scores() # 以带权的胜率进行训练 ADP
-            payoffs = self.get_payoffs() # 以胜率为奖励值训练 WP
-            
+            payoffs = self.get_scores() # 以带权的胜率进行训练 WS
+            # payoffs = self.get_payoffs_train() # 以胜率为奖励值训练 WR  
             
         return trajectories, payoffs
 
@@ -203,6 +222,16 @@ class Env(object):
         '''
         return self._extract_state(self.game.get_state(player_id))  # type: ignore
 
+    def get_payoffs_train(self):
+        ''' Get the payoffs of players. Must be implemented in the child class.
+
+        Returns:
+            (list): A list of payoffs for each player.
+
+        Note: Must be implemented in the child class.
+        '''
+        raise NotImplementedError
+    
     def get_payoffs(self):
         ''' Get the payoffs of players. Must be implemented in the child class.
 
@@ -248,24 +277,9 @@ class Env(object):
         return seed
 
     def _extract_state(self, state):
-        # if self.get_player_id() in [0, 2]: # 位置 0 2 存储的是两人局模型
-        #     return self._extract_state_416(state)
-        # elif self.get_player_id() in [1, 3]: # 位置 1 3 存储的是四人局模型
-        #     return self._extract_state_604(state)
-        return self._extract_state_4(state)
-        
-    def _extract_state_416(self, state):
-        ''' Extract useful information from state for RL. Must be implemented in the child class.
-
-        Args:
-            state (dict): The raw state
-
-        Returns:
-            (numpy.array): The extracted state
-        '''
-        raise NotImplementedError
+        return self._extract_state_430(state)
     
-    def _extract_state_604(self, state):
+    def _extract_state_470(self, state):
         ''' Extract useful information from state for RL. Must be implemented in the child class.
 
         Args:

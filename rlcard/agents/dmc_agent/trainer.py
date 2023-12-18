@@ -1,18 +1,3 @@
-# Copyright 2021 RLCard Team of Texas A&M University
-# Copyright 2021 DouZero Team of Kwai
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#    http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import os
 import pprint
 import threading
@@ -25,7 +10,7 @@ from torch import multiprocessing as mp
 from torch import nn
 
 from .file_writer import FileWriter
-from .model import DMCModel
+from .model import DMCModel, RuleModel, MultiModel
 from .utils import act, create_buffers, create_optimizers, get_batch, log
 
 
@@ -68,7 +53,8 @@ def learn(position,
         optimizer.step()
 
         for actor_model in actor_models:
-            actor_model.get_agent(position).load_state_dict(agent.state_dict())
+            if actor_model.get_agent(position).use_net:
+                actor_model.get_agent(position).load_state_dict(agent.state_dict())
         return stats
 
 
@@ -81,6 +67,7 @@ class DMCTrainer:
                  num_actors = 5,
                  training_device=0,
                  savedir='experiments/dmc_result',
+                 modeldir='experiments/dmc_result/model.tar',
                  total_frames=10000000000,
                  num_eval_games=10000,
                  exp_epsilon=0.01,
@@ -104,6 +91,7 @@ class DMCTrainer:
             num_actors (int): Number of actors for each simulation device
             training_device (int): The index of the GPU used for training models
             savedir (string): Root dir where experiment data will be saved
+            modeldir (string): Root dir where experiment data will be reloaded
             total_frames (int): Total environment frames to train for
             exp_epsilon (float): The prbability for exploration
             batch_size (int): Learner batch size
@@ -122,14 +110,14 @@ class DMCTrainer:
             rootdir=savedir,
         ) # 将 logger 存入 savedir 下
 
-        self.checkpointpath = os.path.expandvars(
-            os.path.expanduser('%s/%s' % (savedir, 'model.tar')))
+        
 
         self.T = unroll_length
         self.B = batch_size
 
         self.load_model = load_model # 是否加载已有模型
         self.savedir = savedir # 存储实验数据的根目录
+        self.checkpointpath = modeldir # 模型文件所在处
         self.save_interval = save_interval # 间隔多少 minute 存储一下模型
         self.num_actor_devices = num_actor_devices # 使用模拟器的设备数
         self.num_actors = num_actors # 每个模拟器上的 actor 数
@@ -151,10 +139,34 @@ class DMCTrainer:
 
         self.mean_episode_return_buf = [deque(maxlen=100) for _ in range(self.env.num_players)]
 
-    def start(self):
+    def start(self):        
         # Initialize actor models
+        # models = []
+        # for device in range(self.num_actor_devices):
+        #     model = DMCModel(self.env.state_shape,
+        #                      self.action_shape,
+        #                      exp_epsilon=self.exp_epsilon,
+        #                      device=device) # 创建 num_players 个 DMC Agent 合并为一个 DMC Model
+        #     model.share_memory() # 分别对 num_players 个 DMC Agent 的网络部分进行共享内存
+        #     model.eval() # 告诉网络，这个阶段是用来测试的，于是模型的参数在该阶段不进行更新
+        #     models.append(model) # 对每一个设备都初始化一个 DMC Model
+            
         models = []
         for device in range(self.num_actor_devices):
+            # 前期向模型学习
+            # model = RuleModel(self.env.num_players)
+            # models.append(model) # 对每一个设备都初始化一个 DMC Model
+            
+            # 中期和模型学习
+            # model = MultiModel(self.env.state_shape,
+            #                    self.action_shape,
+            #                    exp_epsilon=self.exp_epsilon,
+            #                    device=device)
+            # model.share_memory()
+            # model.eval()
+            # models.append(model) # 对每一个设备都初始化一个 DMC Model
+
+            # 后期自我博弈
             model = DMCModel(self.env.state_shape,
                              self.action_shape,
                              exp_epsilon=self.exp_epsilon,
@@ -201,6 +213,7 @@ class DMCTrainer:
         frames, stats = 0, {k: 0 for k in stat_keys}
 
         # Load models if any
+        # if os.path.exists(self.checkpointpath):
         if self.load_model and os.path.exists(self.checkpointpath):
             checkpoint_states = torch.load(
                     self.checkpointpath, map_location="cuda:"+str(self.training_device)
@@ -209,7 +222,8 @@ class DMCTrainer:
                 learner_model.get_agent(p).load_state_dict(checkpoint_states["model_state_dict"][p])
                 optimizers[p].load_state_dict(checkpoint_states["optimizer_state_dict"][p])
                 for device in range(self.num_actor_devices):
-                    models[device].get_agent(p).load_state_dict(learner_model.get_agent(p).state_dict())
+                    if models[device].get_agent(p).use_net:
+                        models[device].get_agent(p).load_state_dict(learner_model.get_agent(p).state_dict())
             stats = checkpoint_states["stats"]
             frames = checkpoint_states["frames"]
             log.info(f"Resuming preempted job, current stats:\n{stats}")
@@ -259,14 +273,15 @@ class DMCTrainer:
                     threads.append(thread)
 
         def checkpoint(frames):
-            log.info('Saving checkpoint to %s', self.checkpointpath)
             _agents = learner_model.get_agents()
+            model_tar_dir = os.path.expandvars(os.path.expanduser('%s/%s' % (self.savedir, 'model_'+str(frames)+'.tar')))
             torch.save({
                 'model_state_dict': [_agent.state_dict() for _agent in _agents],
                 'optimizer_state_dict': [optimizer.state_dict() for optimizer in optimizers],
                 "stats": stats,
                 'frames': frames,
-            }, self.checkpointpath)
+            }, model_tar_dir)
+            log.info('Saving checkpoint to %s', model_tar_dir)
 
             # Save the weights for evaluation purpose
             for position in range(self.env.num_players):

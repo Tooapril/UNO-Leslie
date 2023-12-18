@@ -29,7 +29,7 @@ def evaluate(args):
     set_seed(args.seed)
 
     # Make the environment with seed
-    env = rlcard.make(args.env, config={'seed': args.seed})
+    env = rlcard.make(args.env, config={'seed': args.seed, 'num_cards': args.num_cards})
 
     # Load models
     agents = []
@@ -41,14 +41,18 @@ def evaluate(args):
     rewards = tournament(env, args.num_games)
     for position, reward in enumerate(rewards):
         print(position, args.models[position], reward)
+    if args.num_cards > 0:
+        print('0,2', env.count1 / args.num_games)
+        print('1,3', env.count2 / args.num_games)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Evaluation example in RLCard")
     parser.add_argument('--env', type=str, default='uno',
             choices=['blackjack', 'leduc-holdem', 'limit-holdem', 'doudizhu', 'mahjong', 'no-limit-holdem', 'uno', 'gin-rummy'])
-    parser.add_argument('--models', nargs='*', default=['random', 'uno-rule-v1', 'random', 'uno-rule-v1'])
-    parser.add_argument('--cuda', type=str, default='0')
+    parser.add_argument('--models', nargs='*', default=['experiments/uno/dmc/v4.0.0/0_2000518400.pth', 'experiments/uno/dmc/v4.0.0/1_2000518400.pth', 'experiments/uno/dmc/v4.0.0/2_2000518400.pth', 'experiments/uno/dmc/v4.0.0/3_2000518400.pth'])
+    parser.add_argument('--cuda', type=str, default='1')
     parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--num_cards', type=int, default=0)
     parser.add_argument('--num_games', type=int, default=10000)
     args = parser.parse_args()
 

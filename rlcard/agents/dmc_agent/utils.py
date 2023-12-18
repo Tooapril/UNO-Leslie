@@ -1,18 +1,3 @@
-# Copyright 2021 RLCard Team of Texas A&M University
-# Copyright 2021 DouZero Team of Kwai
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#    http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import logging
 import traceback
 
@@ -109,7 +94,7 @@ def act(i, device, T, free_queue, full_queue, model, buffers, env):
                     for i in range(0, len(trajectories[p])-2, 2):
                         obs_x = trajectories[p][i]['x_batch'] # 获取本局游戏 玩家 p 的 state_x 部分
                         obs_z = trajectories[p][i]['z_batch'] # 获取本局游戏 玩家 p 的 state_z 部分
-                        obs_action = env.get_action_feature(trajectories[p][i+1]) # 获取本局游戏 玩家 p 的所有 action（61 —— one-hot编码）
+                        obs_action = env.get_action_feature(trajectories[p][i+1]) # 获取本局游戏 玩家 p 的所有 action（63 —— one-hot编码）
                         obs_x_buf[p].append(torch.from_numpy(obs_x))
                         obs_z_buf[p].append(torch.from_numpy(obs_z))
                         obs_action_buf[p].append(torch.from_numpy(obs_action))

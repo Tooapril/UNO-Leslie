@@ -36,48 +36,67 @@ def evaluate(args):
     # Ensure the player position
     player = args.position
     teammate = (args.position + 2) % env.num_players
-    opponent_left = (args.position - 1) % env.num_players
-    opponent_right = (args.position + 1) % env.num_players
+    left_opponent = (args.position - 1) % env.num_players
+    right_opponent = (args.position + 1) % env.num_players
     
     # Identify model file
-    y = [f for f in os.listdir(args.log_dir)
-                if os.path.isfile(os.path.join(args.log_dir, f)) and f.startswith(str(player) + "_")] # 获取日志文件下所有玩家位开头的
-    y = [x.split('_')[1] for x in y] # 仅取断点数保存
-    y.sort(key=lambda x:int(x.split('.')[0])) # 按数字顺序排序
+    # 加载位置 0, 2 的模型文件名
+    if os.path.exists(args.log_dir1):
+        x1 = [f for f in os.listdir(args.log_dir1)
+                    if os.path.isfile(os.path.join(args.log_dir1, f)) and f.startswith(str(player) + "_")] # 获取日志文件下所有 “0_” 开头的
+        x1.sort(key=lambda z:int(z.split('.')[0])) # 将所有 position 位的日志文件排序
+        
+        x2 = [f for f in os.listdir(args.log_dir1)
+                    if os.path.isfile(os.path.join(args.log_dir1, f)) and f.startswith(str(teammate) + "_")] # 获取日志文件下所有 “2_” 开头的
+        x2.sort(key=lambda z:int(z.split('.')[0])) # 将所有 position 位的日志文件排序
+    
+    # 加载位置 1, 3 的模型文件名
+    if os.path.exists(args.log_dir2):
+        y1 = [f for f in os.listdir(args.log_dir2)
+                    if os.path.isfile(os.path.join(args.log_dir2, f)) and f.startswith(str(left_opponent) + "_")] # 获取日志文件下所有 “1_” 开头的
+        y1.sort(key=lambda z:int(z.split('.')[0])) # 将所有 position 位的日志文件排序
+        
+        y2 = [f for f in os.listdir(args.log_dir2)
+                    if os.path.isfile(os.path.join(args.log_dir2, f)) and f.startswith(str(right_opponent) + "_")] # 获取日志文件下所有 “3_” 开头的
+        y2.sort(key=lambda z:int(z.split('.')[0])) # 将所有 position 位的日志文件排序
     
     with Logger(args.savedir) as logger:
-        for k, v in enumerate(y): # type: ignore
-            # Load models
+        for index in range(len(x1)): # 以 log_dir1 下的断点文件数为标准
             agents = [[None] for _ in range(env.num_players)]
-            agents[player] = load_model(args.log_dir + str(player) + '_' + v, env, device=device)  # type: ignore
-            agents[teammate] = load_model(args.log_dir + str(teammate) + '_' + v, env, device=device)  # type: ignore
-            agents[opponent_left] = load_model("random", env, device=device)  # type: ignore
-            agents[opponent_right] = load_model("random", env, device=device)  # type: ignore
+            if os.path.exists(args.log_dir1) and os.path.exists(args.log_dir2):
+                agents[player] = load_model(args.log_dir1 + x1[index], env, device=device)
+                agents[teammate] = load_model(args.log_dir1 + x2[index], env, device=device)
+                agents[left_opponent] = load_model(args.log_dir2 + y1[index], env, device=device)
+                agents[right_opponent] = load_model(args.log_dir2 + y2[index], env, device=device)
+            else:
+                agents[player] = load_model(args.log_dir1 + x1[index], env, device=device)
+                agents[teammate] = load_model(args.log_dir1 + x2[index], env, device=device)
+                agents[left_opponent] = load_model('uno-rule-v2', env, position=1, device=device)
+                agents[right_opponent] = load_model('uno-rule-v2', env, position=3, device=device)
             env.set_agents(agents)
             
-            # Evaluate the performance. Play with random agents.
-            if k % args.evaluate_every == 0:
-                logger.log_performance(v[v.rfind('_')+1:v.rfind('.')], tournament(env, args.num_games)[player]) # 获取玩家 0 的胜率存入日志
+            logger.log_performance(x1[index][x1[index].rfind('_')+1 : x1[index].rfind('.')], tournament(env, args.num_games)[args.position]) # 获取玩家 0 的胜率存入日志
 
         # Get the paths
         csv_path, fig_path = logger.csv_path, logger.fig_path
 
     # Plot the learning curve
-    plot_curve(csv_path, fig_path, args.algorithm, player)
+    plot_curve(csv_path, fig_path, args.algorithm, args.position)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Evaluation example in RLCard")
     parser.add_argument('--env', type=str, default='uno',
             choices=['blackjack', 'leduc-holdem', 'limit-holdem', 'doudizhu', 'mahjong', 'no-limit-holdem', 'uno', 'gin-rummy'])
-    parser.add_argument('--algorithm', type=str, default='dmc')
-    parser.add_argument('--cuda', type=str, default='')
+    parser.add_argument('--algorithm', type=str, default='DMC VS Rule')
+    parser.add_argument('--cuda', type=str, default='1')
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--position', type=int, default=0)
     parser.add_argument('--num_games', type=int, default=10000)
-    parser.add_argument('--evaluate_every', type=int, default=1)
-    parser.add_argument('--log_dir', type=str, default='experiments/uno/dmc/')
+    parser.add_argument('--log_dir1', type=str, default='')
+    parser.add_argument('--log_dir2', type=str, default='')
     parser.add_argument('--savedir', type=str, default='experiments/uno/dmc/test/')
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda
     evaluate(args)
+

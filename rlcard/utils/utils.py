@@ -221,7 +221,7 @@ def tournament(env, num):
         payoffs[i] /= counter  # type: ignore
     return payoffs
 
-def plot_curve(csv_path, save_path, algorithm, position):
+def plot_curve(csv_path, save_path, remark):
     ''' Read data from csv file and plot the results
     '''
     import os
@@ -235,7 +235,7 @@ def plot_curve(csv_path, save_path, algorithm, position):
             xs.append(int(row['timestep']))
             ys.append(float(row['reward']))
         fig, ax = plt.subplots()
-        ax.plot(xs, ys, label=algorithm+str(position))
+        ax.plot(xs, ys, label=remark)
         ax.set(xlabel='Training steps', ylabel='Winning rate')
         ax.legend()
         ax.grid()
@@ -246,7 +246,7 @@ def plot_curve(csv_path, save_path, algorithm, position):
 
         fig.savefig(save_path)
 
-def plot_double_curve(csv0_path, csv1_path, save_path, algorithm0, algorithm1, position):
+def plot_double_curve(csv0_path, csv1_path, save_path, remark0, remark1):
     import os
     import csv
     import matplotlib.pyplot as plt
@@ -267,8 +267,8 @@ def plot_double_curve(csv0_path, csv1_path, save_path, algorithm0, algorithm1, p
                 ys1.append(float(row['reward']))
                 
             fig, ax = plt.subplots()
-            ax.plot(xs0, ys0, label=algorithm0+str(position), color='#DC524C')
-            ax.plot(xs1, ys1, label=algorithm1+str(position), color='#739BBA')
+            ax.plot(xs0, ys0, label=remark0, color='#DC524C')
+            ax.plot(xs1, ys1, label=remark1, color='#739BBA')
             ax.set(xlabel='Training steps', ylabel='Winning rate')
             ax.legend()
             ax.grid()
@@ -278,3 +278,44 @@ def plot_double_curve(csv0_path, csv1_path, save_path, algorithm0, algorithm1, p
                 os.makedirs(save_dir)
 
             fig.savefig(save_path)
+            
+def plot_triple_curve(csv0_path, csv1_path, csv2_path, save_path, remark0, remark1, remark2):
+    import os
+    import csv
+    import matplotlib.pyplot as plt
+    with open(csv0_path) as csv0:
+        with open(csv1_path) as csv1:
+            with open(csv2_path) as csv2:
+                reader0 = csv.DictReader(csv0)
+                reader1 = csv.DictReader(csv1)
+                reader2 = csv.DictReader(csv2)
+                xs0 = []
+                ys0 = []
+                xs1 = []
+                ys1 = []
+                xs2 = []
+                ys2 = []
+                
+                for row in reader0:
+                    xs0.append(int(row['timestep']))
+                    ys0.append(float(row['reward']))
+                for row in reader1:
+                    xs1.append(int(row['timestep']))
+                    ys1.append(float(row['reward']))
+                for row in reader2:
+                    xs2.append(int(row['timestep']))
+                    ys2.append(float(row['reward']))
+                    
+                fig, ax = plt.subplots()
+                ax.plot(xs0, ys0, label=remark0, color='#DC524C')
+                ax.plot(xs1, ys1, label=remark1, color='#739BBA')
+                ax.plot(xs2, ys2, label=remark2, color='#F6C660')
+                ax.set(xlabel='Training steps', ylabel='Winning rate')
+                ax.legend()
+                ax.grid()
+                
+                save_dir = os.path.dirname(save_path)
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+
+                fig.savefig(save_path)

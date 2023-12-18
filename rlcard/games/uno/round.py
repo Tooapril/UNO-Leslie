@@ -186,18 +186,15 @@ class UnoRound:
             self.winner = UnoJudger.judge_winner(self.payoffs)
         
         if not self.winner: # 平局，取任意一队的手牌分作为奖励值
-            winner_payoffs = self.payoffs[0] + self.payoffs[2]
-            self.payoffs = [winner_payoffs for _ in range(len(players))]
+            self.payoffs = [0 for _ in range(self.num_players)]
         else: # 非平局，取输的一队手牌分作为奖励值
             for index, player in enumerate(players): # 计算输家手牌分作为奖励值
                 if index not in self.winner:
                     winner_payoffs += self.payoffs[index]
         
             for index, player in enumerate(players): # 给各玩家赋予奖励值
-                if index in self.winner: # 非平局，取输的一队手牌分作为奖励值  # type: ignore
-                    self.payoffs[index] = - winner_payoffs
-                else: # 非平局，取输的一队手牌分作为奖励值
-                    self.payoffs[index] = winner_payoffs
+                if index in self.winner: # 非平局，取输的一队手牌均分作为两名玩家的奖励值
+                    self.payoffs[index] = - winner_payoffs / 2
         return self.payoffs
     
     def get_payoffs_train(self, players):
@@ -228,12 +225,6 @@ class UnoRound:
             self.winner = UnoJudger.judge_winner(self.payoffs)
         
         for index, _ in enumerate(players):
-            # if not self.winner: # 平局时，奖励值均为 0
-            #     self.payoffs[index] = 0
-            # elif index in self.winner:
-            #     self.payoffs[index] = 1
-            # else:
-            #     self.payoffs[index] = -1
             if self.winner is not None and index in self.winner: # 赢家记 1 分
                 self.payoffs[index] = 1
             else: # 平局或输家记 0 分
@@ -273,7 +264,7 @@ class UnoRound:
 
     def is_legal_query(self, hand, target):
         for card in hand: # 只负责检查打出 ‘+4’ 牌的玩家手上有无同颜色的牌型
-            if card.color == target.color:  # type: ignore # 当前手牌有 可出的同色牌
+            if card.type != 'wild' and card.color == target.color:  # type: ignore # 当前手牌有 可出的同色牌
                 return True
         return False
 

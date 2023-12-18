@@ -1,29 +1,3 @@
-''' DQN agent
-
-The code is derived from https://github.com/dennybritz/reinforcement-learning/blob/master/DQN/dqn.py
-
-Copyright (c) 2019 Matthew Judell
-Copyright (c) 2019 DATA Lab at Texas A&M University
-Copyright (c) 2016 Denny Britz
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-'''
 
 import random
 from collections import namedtuple
@@ -83,14 +57,14 @@ class DQNAgent(object):
             learning_rate (float): The learning rate of the DQN agent.
             device (torch.device): whether to use the cpu or gpu
         '''
-        self.use_raw = False
-        self.replay_memory_init_size = replay_memory_init_size
+        self.use_raw = False # 动作编码不用原始编码
+        self.replay_memory_init_size = replay_memory_init_size # Replay Memory 中至少有 replay_memory_init_size 大小的值才开始第一次取样
         self.update_target_estimator_every = update_target_estimator_every
         self.discount_factor = discount_factor
-        self.epsilon_decay_steps = epsilon_decay_steps
-        self.batch_size = batch_size
-        self.num_actions = num_actions
-        self.train_every = train_every
+        self.epsilon_decay_steps = epsilon_decay_steps # epsilon 折扣的步长
+        self.batch_size = batch_size # 每次训练在 Memory 中随机取 batch_size 大小的样本
+        self.num_actions = num_actions # 游戏总共动作数
+        self.train_every = train_every # 被 feed 到 Memory后，每 train_every 次训练一次
 
         # Torch device
         if device is None:
@@ -98,13 +72,13 @@ class DQNAgent(object):
         else:
             self.device = device
 
-        # Total timesteps
+        # Total timesteps -- 计算被 feed 的次数
         self.total_t = 0
 
-        # Total training step
+        # Total training step -- 计算被 train 的次数
         self.train_t = 0
 
-        # The epsilon decay scheduler
+        # The epsilon decay scheduler -- 产生从 epsilon_start 到 epsilon_end 一共 epsilon_decay_steps 逐渐递减的值
         self.epsilons = np.linspace(epsilon_start, epsilon_end, epsilon_decay_steps)
 
         # Create estimators
@@ -125,7 +99,7 @@ class DQNAgent(object):
             ts (list): a list of 5 elements that represent the transition
         '''
         (state, action, reward, next_state, done) = tuple(ts)
-        self.feed_memory(state['obs'], action, reward, next_state['obs'], list(state['legal_actions'].keys()), done)
+        self.feed_memory(state['x_batch'], action, reward, next_state['x_batch'], list(state['legal_actions'].keys()), done)
         self.total_t += 1
         tmp = self.total_t - self.replay_memory_init_size
         if tmp>=0 and tmp%self.train_every == 0:
@@ -179,7 +153,7 @@ class DQNAgent(object):
             q_values (numpy.array): a 1-d array where each entry represents a Q value
         '''
         
-        q_values = self.q_estimator.predict_nograd(np.expand_dims(state['obs'], 0))[0]
+        q_values = self.q_estimator.predict_nograd(np.expand_dims(state['x_batch'], 0))[0]
         masked_q_values = -np.inf * np.ones(self.num_actions, dtype=float)
         legal_actions = list(state['legal_actions'].keys())
         masked_q_values[legal_actions] = q_values[legal_actions]
@@ -406,7 +380,7 @@ class Memory(object):
             legal_actions (list): the legal actions of the next state
             done (boolean): whether the episode is finished
         '''
-        if len(self.memory) == self.memory_size:
+        if len(self.memory) == self.memory_size: # 如果超过 memory_size 大小，则将第一个数据弹出去
             self.memory.pop(0)
         transition = Transition(state, action, reward, next_state, legal_actions, done)
         self.memory.append(transition)

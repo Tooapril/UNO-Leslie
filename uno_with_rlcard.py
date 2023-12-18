@@ -18,6 +18,7 @@ def train(args):
     trainer = DMCTrainer(env,
                          load_model=args.load_model,
                          savedir=args.savedir,
+                         modeldir=args.modeldir,
                          total_frames=args.total_frames,
                          num_eval_games=args.num_eval_games,
                          save_interval=args.save_interval,
@@ -35,8 +36,10 @@ if __name__ == '__main__':
     parser.add_argument('--cuda', type=str, default='0')
     parser.add_argument('--load_model', action='store_true',
                     help='Load an existing model')
-    parser.add_argument('--savedir', default='experiments/uno/dmc',
+    parser.add_argument('--savedir', default='experiments/dmc_result',
                         help='Root dir where experiment data will be saved')
+    parser.add_argument('--modeldir', default='experiments/uno/rule_rule_1/model_3008000.tar',
+                        help='Root dir where experiment data will be reloaded')
     parser.add_argument('--total_frames', default=10000000000, type=int)
     parser.add_argument('--num_eval_games', default=10000, type=int)
     parser.add_argument('--save_interval', default=30, type=int,

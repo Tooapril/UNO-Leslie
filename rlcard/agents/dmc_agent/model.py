@@ -1,21 +1,7 @@
-# Copyright 2021 RLCard Team of Texas A&M University
-# Copyright 2021 DouZero Team of Kwai
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#    http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import numpy as np
 import torch
 from torch import nn
+from collections import defaultdict
 
 
 class DMCNet(nn.Module):
@@ -52,6 +38,7 @@ class DMCAgent:
                  exp_epsilon=0.01,
                  device=0):
         self.use_raw = False
+        self.use_net = True
         self.device = torch.device('cuda:'+str(device))
         self.net = DMCNet(state_shape, action_shape, mlp_layers).to(self.device)
         self.exp_epsilon = exp_epsilon
@@ -125,6 +112,103 @@ class DMCAgent:
     def set_device(self, device):
         self.device = device
 
+class UNORuleAgentV2(object):
+    ''' UNO Rule agent version 2
+    '''
+
+    def __init__(self):
+        self.use_raw = False
+        self.use_net = False
+
+    def step(self, state):
+        ''' Predict the action given raw state. A naive rule. Choose the color
+            that appears least in the hand from legal actions. Try to keep wild
+            cards as long as it can.
+
+        Args:
+            state (dict): Raw state from the game
+
+        Returns:
+            action (str): Predicted action
+        '''
+
+        legal_actions = self.filter_draw(np.array(list(state['legal_actions'])))
+
+        # Always choose the card with the most colors
+        color_nums = self.count_colors(legal_actions)
+        color = np.random.choice(color_nums[max(color_nums)])
+        action = np.random.choice(self.filter_color(color, legal_actions))
+        
+        return action
+
+    def eval_step(self, state):
+        ''' Step for evaluation. The same to step
+        '''
+        return self.step(state), []
+
+    @staticmethod
+    def filter_draw(actions):
+        ''' Filter the draw card. If we only have a draw card, we do not filter
+
+        Args:
+            action (list): A list of UNO card string
+
+        Returns:
+            filtered_draw (list): A filtered list of UNO string
+        '''
+        filtered_action = []
+        for key in actions:
+            if key != 60:
+                filtered_action.append(key)
+
+        if len(filtered_action) == 0:
+            filtered_action = actions
+
+        return filtered_action
+
+    @staticmethod
+    def filter_color(index, actions):
+        ''' Choose a color action in hand
+
+        Args:
+            color (list): A String of UNO card color
+
+        Returns:
+            action (string): The actions should be return
+        '''
+        cards = []
+        for key in actions:
+            if key // 15 == index:
+                cards.append(key)
+        
+        if len(cards) == 0:
+            cards = actions
+
+        return cards
+
+    @staticmethod
+    def count_colors(actions):
+        ''' Count the number of cards in each color in hand
+
+        Args:
+            hand (list): A list of UNO card string
+
+        Returns:
+            color_nums (dict): The number cards of each color
+        '''
+        color_nums = {}
+        nums_color = defaultdict(list)
+        for key in actions:
+            index = key // 15
+            if index not in color_nums:
+                color_nums[index] = 0
+            color_nums[index] += 1
+        
+        for k, v in color_nums.items():
+            nums_color[v].append(k)
+        
+        return {k: v for k, v in nums_color.items()}
+
 class DMCModel:
     def __init__(self,
                  state_shape,
@@ -157,3 +241,58 @@ class DMCModel:
 
     def get_agents(self):
         return self.agents
+    
+class RuleModel:
+    def __init__(self, num_player):
+        self.agents = []
+        for i in range(num_player):
+            agent = UNORuleAgentV2()
+            self.agents.append(agent)
+
+    def get_agent(self, index):
+        return self.agents[index]
+
+    def get_agents(self):
+        return self.agents
+    
+class MultiModel:
+    def __init__(self,
+                 state_shape,
+                 action_shape,
+                 mlp_layers=[512,512,512,512,512],
+                 exp_epsilon=0.01,
+                 device=0):
+        agents = [[None] for _ in range(len(state_shape))]
+        agents[0] = DMCAgent(state_shape[0],
+                             action_shape[0],
+                             mlp_layers,
+                             exp_epsilon,
+                             device)
+        agents[1] = UNORuleAgentV2()
+        agents[2] = DMCAgent(state_shape[2],
+                             action_shape[2],
+                             mlp_layers,
+                             exp_epsilon,
+                             device)
+        agents[3] = UNORuleAgentV2()
+        
+        self.agents = agents
+        
+    def share_memory(self):
+        self.agents[0].share_memory()
+        self.agents[2].share_memory()
+
+    def eval(self):
+        self.agents[0].eval()
+        self.agents[2].eval()
+
+    def parameters(self, index):
+        if index in [0,2]:
+            return self.agents[index].parameters()
+
+    def get_agent(self, index):
+        return self.agents[index]
+
+    def get_agents(self):
+        return self.agents
+

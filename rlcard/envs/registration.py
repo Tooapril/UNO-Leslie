@@ -4,6 +4,7 @@ import importlib
 DEFAULT_CONFIG = {
         'allow_step_back': False,
         'seed': None,
+        'num_cards': 0,
         }
 
 class EnvSpec(object):

@@ -173,7 +173,7 @@ def encode_action_sequence_12(action_list, size=63):
     plane = plane.reshape(3, 252)
     return plane
 
-def get_one_hot_array(num_left_cards, max_num_cards=20):
+def get_one_hot_array(num_left_cards, max_num_cards=10):
     one_hot = np.zeros(max_num_cards, dtype=int)
     if num_left_cards > max_num_cards:
         one_hot[max_num_cards - 1] = 1

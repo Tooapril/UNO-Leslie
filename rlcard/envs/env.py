@@ -182,8 +182,8 @@ class Env(object):
 
         # Payoffs
         if not is_training: # 非训练模式，获取胜负情况
-            payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负） WR
-            # payoffs = self.get_scores() # 计算对应玩家的分数 WS
+            # payoffs = self.get_payoffs() # 计算对应玩家游戏结果（胜、平、负） WR
+            payoffs = self.get_scores_eval() # 计算对应玩家的分数 WS
             if team_one and payoffs[0] > 0:
                 self.count1 += 1
             elif team_two and payoffs[1] > 0:
@@ -251,6 +251,16 @@ class Env(object):
         Note: Must be implemented in the child class.
         '''
         raise NotImplementedError
+    
+    def get_scores_eval(self):
+        ''' Get the scores of players. Must be implemented in the child class.
+
+        Returns:
+            (list): A list of scores for each player.
+
+        Note: Must be implemented in the child class.
+        '''
+        raise NotImplementedError
 
     def get_perfect_information(self):
         ''' Get the perfect information of the current state
@@ -279,7 +289,7 @@ class Env(object):
     def _extract_state(self, state):
         return self._extract_state_430(state)
     
-    def _extract_state_470(self, state):
+    def _extract_state_430(self, state):
         ''' Extract useful information from state for RL. Must be implemented in the child class.
 
         Args:

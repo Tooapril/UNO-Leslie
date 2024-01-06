@@ -130,6 +130,15 @@ class UnoGame:
         '''
         
         return self.round.get_scores(self.players)
+    
+    def get_scores_eval(self):
+        ''' Return the scores of the game
+
+        Returns:
+            (list): Each entry corresponds to the score of one player
+        '''
+        
+        return self.round.get_scores_eval(self.players)
 
     def get_legal_actions(self):
         ''' Return the legal actions for current player

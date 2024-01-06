@@ -9,3 +9,7 @@ register(
 register(
     model_id = 'uno-rule-v2',
     entry_point='rlcard.models.uno_rule_v2:UNORuleModelV2')
+
+register(
+    model_id = 'uno-rule-v3',
+    entry_point='rlcard.models.uno_rule_v3:UNORuleModelV3')

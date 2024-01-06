@@ -19,10 +19,10 @@ class UnoEnv(Env):
         self.default_game_config = DEFAULT_GAME_CONFIG
         self.game = Game()
         super().__init__(config)
-        self.state_shape = [[470]for _ in range(self.num_players)]
+        self.state_shape = [[430]for _ in range(self.num_players)]
         self.action_shape = [None for _ in range(self.num_players)]
 
-    def _extract_state_470(self, state):
+    def _extract_state_430(self, state):
         current_hand = encode_hand(state['hand']) # obs[0] - obs[2] 记录玩家当前手牌
         teammate_hand = encode_hand(state['teammate_hand']) # obs[3] - obs[5] 记录队友当前手牌
         target_card = encode_target(state['target']) # obs[6] 记录当前牌面牌值
@@ -62,6 +62,10 @@ class UnoEnv(Env):
     def get_scores(self):
         
         return np.array(self.game.get_scores())
+    
+    def get_scores_eval(self):
+        
+        return np.array(self.game.get_scores_eval())
 
     def _decode_action(self, action_id):
         legal_ids = self._get_legal_actions()

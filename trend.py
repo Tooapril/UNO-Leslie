@@ -6,7 +6,8 @@ import argparse
 import torch
 import rlcard
 from rlcard.agents import DQNAgent, RandomAgent
-from rlcard.utils import get_device, set_seed, tournament, Logger, plot_curve
+from rlcard.utils import get_device, set_seed, tournament, plot_curve
+from rlcard.utils.logger import Logger
 
 def load_model(model_path, env, position=None, device=None):
     if os.path.isfile(model_path):  # Torch model
@@ -71,8 +72,8 @@ def evaluate(args):
             else:
                 agents[player] = load_model(args.log_dir1 + x1[index], env, device=device)
                 agents[teammate] = load_model(args.log_dir1 + x2[index], env, device=device)
-                agents[left_opponent] = load_model('uno-rule-v2', env, position=1, device=device)
-                agents[right_opponent] = load_model('uno-rule-v2', env, position=3, device=device)
+                agents[left_opponent] = load_model(args.algorithm, env, position=1, device=device)
+                agents[right_opponent] = load_model(args.algorithm, env, position=3, device=device)
             env.set_agents(agents)
             
             logger.log_performance(x1[index][x1[index].rfind('_')+1 : x1[index].rfind('.')], tournament(env, args.num_games)[args.position]) # 获取玩家 0 的胜率存入日志
@@ -81,22 +82,22 @@ def evaluate(args):
         csv_path, fig_path = logger.csv_path, logger.fig_path
 
     # Plot the learning curve
-    plot_curve(csv_path, fig_path, args.algorithm, args.position)
+    plot_curve(csv_path, fig_path, args.remark)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Evaluation example in RLCard")
     parser.add_argument('--env', type=str, default='uno',
             choices=['blackjack', 'leduc-holdem', 'limit-holdem', 'doudizhu', 'mahjong', 'no-limit-holdem', 'uno', 'gin-rummy'])
-    parser.add_argument('--algorithm', type=str, default='DMC VS Rule')
-    parser.add_argument('--cuda', type=str, default='1')
+    parser.add_argument('--algorithm', type=str, default='uno-rule-v2', choices=['uno-rule-v2', 'random'])
+    parser.add_argument('--remark', type=str, default='DMC VS Rule')
+    parser.add_argument('--cuda', type=str, default='0')
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--position', type=int, default=0)
+    parser.add_argument('--position', type=int, default=1)
     parser.add_argument('--num_games', type=int, default=10000)
-    parser.add_argument('--log_dir1', type=str, default='')
+    parser.add_argument('--log_dir1', type=str, default='experiments/uno/dmc/1_rule_rule_1/')
     parser.add_argument('--log_dir2', type=str, default='')
     parser.add_argument('--savedir', type=str, default='experiments/uno/dmc/test/')
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda
     evaluate(args)
-

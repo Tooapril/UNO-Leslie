@@ -197,6 +197,30 @@ class UnoRound:
                     self.payoffs[index] = - winner_payoffs / 2
         return self.payoffs
     
+    def get_scores_eval(self, players):
+        '''Get player's payoffs'''
+        # 计分策略：取二、三、四名游戏结束时的手牌分总和正数与第一名的手牌分相加
+        winner_payoffs = 0
+        for index, player in enumerate(players):
+            self.payoffs[index] = self.count_hand_score(player.hand)
+            
+        if self.winner is None:
+            self.winner = UnoJudger.judge_winner(self.payoffs)
+        
+        if not self.winner: # 平局，取任意一队的手牌分作为奖励值
+            self.payoffs = [0 for _ in range(self.num_players)]
+        else: # 非平局，取输的一队手牌分作为奖励值
+            for index, player in enumerate(players): # 计算输家手牌分作为奖励值
+                if index not in self.winner:
+                    winner_payoffs += self.payoffs[index]
+        
+            for index, player in enumerate(players): # 给各玩家赋予奖励值
+                if index in self.winner: # 非平局，取输的一队手牌均分作为两名玩家的奖励值
+                    self.payoffs[index] = - winner_payoffs / 2
+                else:
+                    self.payoffs[index] = 0
+        return self.payoffs
+    
     def get_payoffs_train(self, players):
         '''Get player's payoffs for training'''
         # 计分策略：取二、三、四名游戏结束时的手牌分总和正数与第一名的手牌分相加
